@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Música</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b0a;color:white;font-family:Arial,sans-serif;padding:20px}
+h1{color:#1ed760;font-size:30px}
+p{color:#aaa}
+input,button{border:0;border-radius:12px;padding:14px;font-size:15px}
+input{background:#202522;color:white;width:100%;margin:8px 0}
+button{background:#1ed760;color:#061008;font-weight:bold;cursor:pointer;margin:4px}
+.tabs{display:flex;gap:5px;margin:20px 0;flex-wrap:wrap}
+.tabs button{background:#202522;color:white}
+.tabs button.active{background:#1ed760;color:black}
+.song{display:flex;align-items:center;gap:12px;background:#171c19;padding:12px;margin:10px 0;border-radius:12px}
+.song img{width:58px;height:58px;border-radius:8px;object-fit:cover}
+.song div{flex:1;min-width:0}
+.song b{display:block;overflow:hidden;text-overflow:ellipsis}
+.song small{color:#aaa}
+.song button{padding:10px}
+#player{position:sticky;bottom:0;background:#101713;padding:15px;border-radius:15px;margin-top:20px}
+audio{width:100%}
+#status{color:#1ed760}
+</style>
+</head>
+<body>
+
+<h1>♫ Mi Música</h1>
+<p>Toda tu música en un solo lugar 💚</p>
+
+<input id="client" placeholder="Pega aquí tu Client ID de Jamendo">
+<button onclick="saveID()">Guardar conexión</button>
+
+<h3>Buscar música</h3>
+<input id="search" placeholder="¿Qué canción quieres escuchar?">
+<button onclick="searchMusic()">Buscar 🔎</button>
+
+<div class="tabs">
+<button class="active" onclick="showTab('music',this)">Inicio</button>
+<button onclick="showTab('favorites',this)">♥ Favoritos</button>
+<button onclick="showTab('lists',this)">♫ Mi lista</button>
+</div>
+
+<p id="status">Conecta Jamendo para comenzar.</p>
+<div id="songs"></div>
+
+<div id="player">
+<b id="playing">Selecciona una canción</b>
+<audio id="audio" controls></audio>
+</div>
+
+<script>
+let tracks=[];
+let favorites=JSON.parse(localStorage.getItem('favorites')||'[]');
+let tab='music';
+
+function saveID(){
+ const id=document.getElementById('client').value.trim();
+ if(!id)return alert('Escribe tu Client ID');
+ localStorage.setItem('jamendoID',id);
+ loadMusic();
+}
+
+document.getElementById('client').value=
+ localStorage.getItem('jamendoID')||'';
+
+async function loadMusic(query=''){
+ const id=localStorage.getItem('jamendoID');
+ if(!id)return alert('Primero conecta tu Client ID de Jamendo');
+
+ document.getElementById('status').textContent='Buscando canciones...';
+ try{
+ let url='https://api.jamendo.com/v3.0/tracks/?client_id='+
+ encodeURIComponent(id)+'&format=json&limit=30&audioformat=mp32&order=popularity_total';
+ if(query)url+='&namesearch='+encodeURIComponent(query);
+
+ const response=await fetch(url);
+ const data=await response.json();
+ if(!data.results)throw new Error('No se encontraron canciones');
+ tracks=data.results;
+ render();
+ document.getElementById('status').textContent=
+ tracks.length+' canciones encontradas 💚';
+ }catch(e){
+ document.getElementById('status').textContent=
+ 'Error de conexión. Revisa tu Client ID e Internet.';
+ }
+}
+
+function searchMusic(){
+ const q=document.getElementById('search').value.trim();
+ if(q)loadMusic(q);
+}
+
+function showTab(name,btn){
+ tab=name;
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+ btn.classList.add('active');
+ render();
+}
+
+function render(){
+ const box=document.getElementById('songs');
+ box.innerHTML='';
+ let items=tab==='favorites'
+ ?tracks.filter(t=>favorites.includes(t.id))
+ :tracks;
+
+ if(tab==='lists'){
+ items=tracks.filter(t=>favorites.includes(t.id));
+ }
+ if(!items.length){
+ box.innerHTML='<p>No hay canciones aquí todavía.</p>';
+ return;
+ }
+ items.forEach(t=>{
+ const el=document.createElement('div');
+ el.className='song';
+ const img=document.createElement('img');
+ img.src=t.album_image||'';
+ const info=document.createElement('div');
+ const title=document.createElement('b');
+ title.textContent=t.name;
+ const artist=document.createElement('small');
+ artist.textContent=t.artist_name;
+ info.append(title,artist);
+ const play=document.createElement('button');
+ play.textContent='▶';
+ play.onclick=()=>playSong(t);
+ const fav=document.createElement('button');
+ fav.textContent=favorites.includes(t.id)?'♥':'♡';
+ fav.onclick=()=>toggleFav(t.id);
+ el.append(img,info,play,fav);
+ box.append(el);
+ });
+}
+
+function playSong(t){
+ if(!t.audio)return alert('Audio no disponible');
+ document.getElementById('playing').textContent=
+ t.name+' - '+t.artist_name;
+ const audio=document.getElementById('audio');
+ audio.src=t.audio;
+ audio.play();
+}
+
+function toggleFav(id){
+ favorites=favorites.includes(id)
+ ?favorites.filter(x=>x!==id):[...favorites,id];
+ localStorage.setItem('favorites',JSON.stringify(favorites));
+ render();
+}
+
+if(localStorage.getItem('jamendoID'))loadMusic();
+</script>
+</body>
+</html>
