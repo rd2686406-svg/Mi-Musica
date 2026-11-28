@@ -25,7 +25,6 @@ audio{width:100%;margin-top:12px}
 </head>
 
 <body>
-
 <h1>🎵 Mi Música</h1>
 <p class="sub">Busca música en todas las plataformas</p>
 
@@ -33,7 +32,7 @@ audio{width:100%;margin-top:12px}
 
 <button onclick="buscarMusica()">🔍 Buscar en todas</button>
 
-<p id="estado"></p>
+<p id="estado">Listo para buscar música</p>
 <div id="resultados"></div>
 
 <h3>❤️ Mis favoritos</h3>
@@ -44,32 +43,23 @@ audio{width:100%;margin-top:12px}
 <audio id="reproductor" controls></audio>
 
 <script>
-const JAMENDO_ID = "93852133";
-const AUDIUS_API = "https://api.audius.co/v1";
+const JAMENDO_ID="93852133";
+const AUDIUS_API="https://api.audius.co/v1";
 
-let favoritos = JSON.parse(
+let favoritos=JSON.parse(
   localStorage.getItem("miMusicaFavoritos") ||
-  localStorage.getItem("favorites") ||
-  "[]"
+  localStorage.getItem("favorites") || "[]"
 );
+let cancionesDisponibles={};
 
-let cancionesDisponibles = {};
-
-function guardarDatos(){
-  localStorage.setItem("miMusicaFavoritos",JSON.stringify(favoritos));
-}
-
-function escapar(texto){
-  return String(texto || "").replace(/[&<>"']/g, letra => ({
+function escapar(t){
+  return String(t||"").replace(/[&<>"']/g,c=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[letra]);
+  })[c]);
 }
 
 function reproducir(url,titulo){
-  if(!url){
-    alert("Esta canción no se puede reproducir aquí.");
-    return;
-  }
+  if(!url){alert("Esta canción no tiene reproducción disponible aquí.");return;}
   const audio=document.getElementById("reproductor");
   audio.src=url;
   audio.play().catch(()=>alert("No se pudo reproducir esta canción."));
@@ -78,24 +68,22 @@ function reproducir(url,titulo){
 
 function reproducirPorId(id){
   const c=cancionesDisponibles[id];
-  if(c) reproducir(c.audio,c.titulo);
+  if(c)reproducir(c.audio,c.titulo);
 }
 
 function abrirPorId(id){
   const c=cancionesDisponibles[id];
-  if(c && c.enlace) window.open(c.enlace,"_blank");
+  if(c&&c.enlace)window.open(c.enlace,"_blank");
 }
 
 function guardarFavoritoPorId(id){
   const c=cancionesDisponibles[id];
   if(!c)return;
-
   if(favoritos.some(x=>x.id===id)){
     favoritos=favoritos.filter(x=>x.id!==id);
   }else{
     favoritos.push(c);
   }
-
   guardarDatos();
   mostrarFavoritos();
 }
@@ -106,29 +94,30 @@ function quitarFavorito(id){
   mostrarFavoritos();
 }
 
+function guardarDatos(){
+  localStorage.setItem("miMusicaFavoritos",JSON.stringify(favoritos));
+}
+
 function reproducirFavorito(id){
   const c=favoritos.find(x=>x.id===id);
-  if(c) reproducir(c.audio,c.titulo);
+  if(c)reproducir(c.audio,c.titulo);
 }
 
 function abrirFavorito(id){
   const c=favoritos.find(x=>x.id===id);
-  if(c && c.enlace) window.open(c.enlace,"_blank");
+  if(c&&c.enlace)window.open(c.enlace,"_blank");
 }
 
 function mostrarCanciones(lista){
-  const contenedor=document.getElementById("resultados");
-
-  cancionesDisponibles=Object.fromEntries(
-    lista.map(c=>[c.id,c])
-  );
+  const cont=document.getElementById("resultados");
+  cancionesDisponibles=Object.fromEntries(lista.map(c=>[c.id,c]));
 
   if(!lista.length){
-    contenedor.innerHTML="<p>No se encontraron canciones en las plataformas que respondieron.</p>";
+    cont.innerHTML="<p>No se encontraron canciones en las fuentes disponibles.</p>";
     return;
   }
 
-  contenedor.innerHTML=lista.map(c=>`
+  cont.innerHTML=lista.map(c=>`
     <div class="resultado">
       <strong>${escapar(c.titulo)}</strong><br>
       <small>${escapar(c.artista)} · ${escapar(c.fuente)}</small><br>
@@ -140,14 +129,13 @@ function mostrarCanciones(lista){
 }
 
 function mostrarFavoritos(){
-  const contenedor=document.getElementById("favoritos");
-
+  const cont=document.getElementById("favoritos");
   if(!favoritos.length){
-    contenedor.innerHTML="<p>Todavía no guardaste canciones.</p>";
+    cont.innerHTML="<p>Todavía no guardaste canciones.</p>";
     return;
   }
 
-  contenedor.innerHTML=favoritos.map(c=>`
+  cont.innerHTML=favoritos.map(c=>`
     <div class="resultado">
       <strong>${escapar(c.titulo)}</strong><br>
       <small>${escapar(c.artista)} · ${escapar(c.fuente)}</small><br>
@@ -159,64 +147,39 @@ function mostrarFavoritos(){
 }
 
 async function buscarJamendo(q){
-  const url=new URL("https://api.jamendo.com/v3.0/tracks/");
-  url.search=new URLSearchParams({
-    client_id:JAMENDO_ID,
-    format:"json",
-    search:q,
-    limit:"20",
-    audioformat:"mp32"
+  const u=new URL("https://api.jamendo.com/v3.0/tracks/");
+  u.search=new URLSearchParams({
+    client_id:JAMENDO_ID,format:"json",search:q,limit:"20",audioformat:"mp32"
   });
-
-  const r=await fetch(url);
-  if(!r.ok)throw new Error("Jamendo no respondió");
-
+  const r=await fetch(u);
+  if(!r.ok)throw Error("Jamendo");
   const d=await r.json();
-
   return (d.results||[]).map(x=>({
-    id:"jamendo-"+x.id,
-    titulo:x.name,
-    artista:x.artist_name,
-    fuente:"Jamendo",
-    audio:x.audio,
-    enlace:x.shareurl
+    id:"jamendo-"+x.id,titulo:x.name,artista:x.artist_name,
+    fuente:"Jamendo",audio:x.audio,enlace:x.shareurl
   }));
 }
 
 async function buscarAudius(q){
-  const url=AUDIUS_API+"/tracks/search?query="+encodeURIComponent(q)+"&limit=20";
-
-  const r=await fetch(url);
-  if(!r.ok)throw new Error("Audius no respondió");
-
+  const r=await fetch(AUDIUS_API+"/tracks/search?query="+encodeURIComponent(q)+"&limit=20");
+  if(!r.ok)throw Error("Audius");
   const d=await r.json();
-
   return (d.data||[]).map(x=>({
-    id:"audius-"+x.id,
-    titulo:x.title,
-    artista:x.user?.name||"Artista",
-    fuente:"Audius",
+    id:"audius-"+x.id,titulo:x.title,
+    artista:x.user?.name||"Artista",fuente:"Audius",
     audio:AUDIUS_API+"/tracks/"+x.id+"/stream",
     enlace:"https://audius.co"+(x.permalink||"")
   }));
 }
 
 async function buscarItunes(q){
-  const url="https://itunes.apple.com/search?term="+
-    encodeURIComponent(q)+"&entity=song&limit=20";
-
-  const r=await fetch(url);
-  if(!r.ok)throw new Error("iTunes no respondió");
-
+  const r=await fetch("https://itunes.apple.com/search?term="+encodeURIComponent(q)+"&entity=song&limit=20");
+  if(!r.ok)throw Error("iTunes");
   const d=await r.json();
-
   return (d.results||[]).map(x=>({
-    id:"itunes-"+x.trackId,
-    titulo:x.trackName,
-    artista:x.artistName,
-    fuente:"iTunes",
-    audio:x.previewUrl||"",
-    enlace:x.trackViewUrl
+    id:"itunes-"+x.trackId,titulo:x.trackName,
+    artista:x.artistName,fuente:"iTunes",
+    audio:x.previewUrl||"",enlace:x.trackViewUrl
   }));
 }
 
@@ -233,15 +196,15 @@ function buscarSpotify(q){
 
 async function buscarMusica(){
   const q=document.getElementById("busqueda").value.trim();
+  const estado=document.getElementById("estado");
 
   if(!q){
-    alert("Escribe una canción o artista.");
+    alert("Escribe el nombre de una canción o artista.");
     return;
   }
 
-  const estado=document.getElementById("estado");
+  estado.textContent="Buscando en todas las plataformas...";
   document.getElementById("resultados").innerHTML="";
-  estado.textContent="Buscando en Jamendo, Audius, iTunes y Spotify...";
 
   const tareas=[
     buscarJamendo(q),
@@ -251,24 +214,23 @@ async function buscarMusica(){
   ];
 
   const nombres=["Jamendo","Audius","iTunes","Spotify"];
-
   const respuestas=await Promise.allSettled(tareas);
   let canciones=[];
-  let fallos=[];
+  let errores=[];
 
   respuestas.forEach((r,i)=>{
     if(r.status==="fulfilled"){
       canciones=canciones.concat(r.value);
     }else{
-      fallos.push(nombres[i]);
+      errores.push(nombres[i]);
     }
   });
 
   mostrarCanciones(canciones);
 
-  estado.textContent=
-    canciones.length+" resultado(s) encontrados. "+
-    (fallos.length?"No respondió: "+fallos.join(", "):"Búsqueda terminada.");
+  estado.textContent=canciones.length+
+    " resultados encontrados. "+
+    (errores.length?"No respondieron: "+errores.join(", "):"Búsqueda terminada.");
 }
 
 document.getElementById("busqueda").addEventListener("keydown",e=>{
