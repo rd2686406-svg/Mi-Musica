@@ -30,6 +30,54 @@ audio{width:100%}
  <head>
 <link rel="manifest" href="manifest.json">
 <body>
+ 
+<section id="musica-paises">
+  <h2>🌎 Música de todos los países</h2>
+  <select id="pais-musica" onchange="buscarMusicaPais()">
+    <option value="">Elegí un país</option>
+    <option value="Paraguay">🇵🇾 Paraguay</option>
+    <option value="Argentina">🇦🇷 Argentina</option>
+    <option value="Brasil">🇧🇷 Brasil</option>
+    <option value="Mexico">🇲🇽 México</option>
+    <option value="Colombia">🇨🇴 Colombia</option>
+    <option value="España">🇪🇸 España</option>
+    <option value="Estados Unidos">🇺🇸 Estados Unidos</option>
+    <option value="Francia">🇫🇷 Francia</option>
+    <option value="Italia">🇮🇹 Italia</option>
+    <option value="Japón">🇯🇵 Japón</option>
+    <option value="Corea">🇰🇷 Corea</option>
+  </select>
+  <div id="resultados-pais"></div>
+</section>
+
+<script>
+async function buscarMusicaPais() {
+  const pais = document.getElementById("pais-musica").value;
+  const resultados = document.getElementById("resultados-pais");
+  if (!pais) return;
+  resultados.textContent = "Buscando música...";
+  try {
+    const url = "https://api.jamendo.com/v3.0/tracks/?client_id=93852133&format=json&limit=20&search=" + encodeURIComponent(pais) + "&audioformat=mp31";
+    const respuesta = await fetch(url);
+    const datos = await respuesta.json();
+    resultados.innerHTML = "";
+    datos.results.forEach(cancion => {
+      const div = document.createElement("div");
+      const titulo = document.createElement("p");
+      titulo.textContent = cancion.artist_name + " - " + cancion.name;
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = cancion.audio;
+      div.append(titulo, audio);
+      resultados.appendChild(div);
+    });
+    if (!datos.results.length) resultados.textContent = "No encontramos canciones.";
+  } catch (error) {
+    resultados.textContent = "No se pudo cargar la música. Intentá nuevamente.";
+  }
+}
+</script>
+
 
 <h1>♫ Mi Música</h1>
 <p>Toda tu música en un solo lugar 💚</p>
