@@ -301,43 +301,6 @@ if(pais === "Argentina"){
   canciones = [];
  }
 
-}else{
- const tags = etiquetas[pais] || pais;
- canciones = await pedirCanciones(
-  "fuzzytags=" + encodeURIComponent(tags) +
-  "&order=popularity_total"
- );
-}
-
-   const unicas = new Map();
-
-   respuestas.flat().forEach(cancion=>{
-    unicas.set(String(cancion.id),cancion);
-   });
-
-   canciones = Array.from(unicas.values()).slice(0,40);
-
-  }else{
-   const tags = etiquetas[pais] || pais;
-
-   canciones = await pedirCanciones(
-    "fuzzytags=" + encodeURIComponent(tags) +
-    "&order=popularity_total"
-   );
-  }
-
-  mostrarCancionesPais(canciones);
-
-  estado.textContent = canciones.length
-   ? canciones.length + " canciones encontradas relacionadas con " + pais + "."
-   : "No encontramos canciones. Probá otro país.";
-
- }catch(error){
-  estado.textContent =
-   "No se pudo buscar. Revisá tu conexión e intentá nuevamente.";
- }
-}
-
 function mostrarCancionesPais(canciones){
  const box = document.getElementById("resultados-pais");
  box.innerHTML = "";
