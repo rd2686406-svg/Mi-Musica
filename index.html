@@ -255,7 +255,6 @@ async function buscarMusicaPais(){
 
  const etiquetas = {
   Paraguay:"paraguay guarani folk",
-  Argentina:"argentina rock folklore cumbia tango",
   Brasil:"brazil samba bossa nova",
   Mexico:"mexico ranchera mariachi",
   Colombia:"colombia cumbia vallenato",
@@ -280,25 +279,48 @@ async function buscarMusicaPais(){
  };
 
  try{
-  const tags = etiquetas[pais] || pais;
-  const canciones = await pedirCanciones(
-   "fuzzytags=" + encodeURIComponent(tags) +
-   "&order=popularity_total"
-  );
+  let canciones = [];
+
+  if(pais === "Argentina"){
+   estado.textContent = "Buscando rock, folklore, cumbia y tango...";
+
+   const estilos = ["rock","folk","cumbia","tango"];
+
+   const respuestas = await Promise.all(
+    estilos.map(estilo =>
+     pedirCanciones(
+      "fuzzytags=" + encodeURIComponent(estilo) +
+      "&order=popularity_total"
+     )
+    )
+   );
+
+   const unicas = new Map();
+
+   respuestas.flat().forEach(cancion=>{
+    unicas.set(String(cancion.id),cancion);
+   });
+
+   canciones = Array.from(unicas.values()).slice(0,40);
+
+  }else{
+   const tags = etiquetas[pais] || pais;
+
+   canciones = await pedirCanciones(
+    "fuzzytags=" + encodeURIComponent(tags) +
+    "&order=popularity_total"
+   );
+  }
 
   mostrarCancionesPais(canciones);
 
-  if(canciones.length){
-   estado.textContent =
-    canciones.length + " canciones relacionadas con " + pais + ".";
-  }else{
-   estado.textContent =
-    "No encontramos canciones para este país. Prueba otro.";
-  }
+  estado.textContent = canciones.length
+   ? canciones.length + " canciones encontradas relacionadas con " + pais + "."
+   : "No encontramos canciones. Probá otro país.";
 
  }catch(error){
   estado.textContent =
-   "No se pudo buscar. Revisa tu conexión e intenta nuevamente.";
+   "No se pudo buscar. Revisá tu conexión e intentá nuevamente.";
  }
 }
 
