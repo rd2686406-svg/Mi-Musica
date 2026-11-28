@@ -6,108 +6,97 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#080b0a">
 <title>Mi Música</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json">
 
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;
- background:#080b0a;
- color:white;
- font-family:Arial,sans-serif;
- padding:20px;
+ margin:0;background:#080b0a;color:white;
+ font-family:Arial,sans-serif;padding-bottom:120px
 }
-h1{color:#1ed760;font-size:30px}
-h2,h3{color:#1ed760}
+header{padding:25px 20px;background:#101914}
+h1{color:#1ed760;font-size:30px;margin:0}
+h2{font-size:21px;margin:22px 0 12px}
 p{color:#aaa}
-input,select,button{
- border:0;
- border-radius:12px;
- padding:14px;
- font-size:15px;
-}
+main{max-width:850px;margin:auto;padding:15px}
 input,select{
- background:#202522;
- color:white;
- width:100%;
- margin:8px 0;
+ width:100%;padding:14px;margin:6px 0;
+ border:1px solid #303b34;border-radius:10px;
+ background:#202822;color:white;font-size:15px
 }
 button{
- background:#1ed760;
- color:#061008;
- font-weight:bold;
- cursor:pointer;
- margin:4px;
+ border:0;border-radius:25px;padding:12px 17px;
+ background:#1ed760;color:#061008;
+ font-weight:bold;cursor:pointer;margin:4px
 }
-.tabs{
- display:flex;
- gap:5px;
- margin:20px 0;
- flex-wrap:wrap;
-}
-.tabs button{background:#202522;color:white}
+button.secondary{background:#26342c;color:white}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin:20px 0}
+.tabs button{background:#202822;color:white}
 .tabs button.active{background:#1ed760;color:black}
-.song{
- display:flex;
- align-items:center;
- gap:12px;
- background:#171c19;
- padding:12px;
- margin:10px 0;
- border-radius:12px;
+.section{margin:20px 0}
+.grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px
 }
-.song img{
- width:58px;
- height:58px;
- border-radius:8px;
- object-fit:cover;
+.card{
+ background:#151c17;border-radius:12px;
+ padding:10px;min-width:0
 }
-.song div{flex:1;min-width:0}
-.song b{
- display:block;
- overflow:hidden;
- text-overflow:ellipsis;
+.card img{
+ width:100%;aspect-ratio:1;object-fit:cover;
+ border-radius:9px;background:#26342c
 }
-.song small{color:#aaa}
-.song button{padding:10px}
+.card b{display:block;margin:9px 0 4px}
+.card small{color:#aaa;display:block}
+.card button{padding:9px 12px}
+.actions{display:flex;flex-wrap:wrap;margin-top:7px}
+#status{color:#1ed760;min-height:24px}
 #player{
- position:sticky;
- bottom:0;
- background:#101713;
- padding:15px;
- border-radius:15px;
- margin-top:20px;
+ position:fixed;bottom:0;left:0;right:0;
+ background:#17231b;border-top:1px solid #35483a;
+ padding:12px 15px calc(12px + env(safe-area-inset-bottom));
+ z-index:10
 }
-audio{width:100%}
-#status,#estado-pais{color:#1ed760}
-#musica-paises{
- background:#111713;
- padding:15px;
- border-radius:15px;
- margin:20px 0;
+.player-inner{max-width:850px;margin:auto}
+#playing{display:block;margin-bottom:7px}
+audio{width:100%;height:38px}
+.hero{
+ background:linear-gradient(135deg,#174d2d,#102017);
+ padding:20px;border-radius:15px;margin-bottom:20px
+}
+.empty{color:#aaa;padding:20px;text-align:center}
+@media(min-width:600px){
+ .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 </style>
 </head>
 
 <body>
 
+<header>
 <h1>♫ Mi Música</h1>
-<p>Toda tu música en un solo lugar 💚</p>
+<p>Tu música, tu mundo. 💚</p>
+</header>
 
-<h3>Conectar Jamendo</h3>
-<input id="client" placeholder="Pega aquí tu Client ID de Jamendo">
-<button onclick="saveID()">Guardar conexión</button>
+<main>
 
-<h3>Buscar música</h3>
-<input id="search" placeholder="¿Qué canción quieres escuchar?">
-<button onclick="searchMusic()">Buscar 🔎</button>
+<div class="hero">
+<h2>¡Bienvenido a Mi Música!</h2>
+<p>Descubre canciones y artistas de todo el mundo.</p>
+</div>
 
-<section id="musica-paises">
-<h2>🌎 Música de todos los países</h2>
-<p>Elegí un país para buscar música relacionada.</p>
+<section class="section">
+<h2>🔎 Buscar música</h2>
+<input id="client" placeholder="Client ID de Jamendo">
+<button onclick="guardarID()">Guardar conexión</button>
+<input id="search" placeholder="Canción o artista">
+<button onclick="buscar()">Buscar música 🔎</button>
+</section>
 
+<section class="section">
+<h2>🌎 Música por países</h2>
 <select id="pais-musica">
-<option value="">Elegí un país</option>
+<option value="">Elegir país</option>
 <option value="Paraguay">🇵🇾 Paraguay</option>
 <option value="Argentina">🇦🇷 Argentina</option>
 <option value="Brasil">🇧🇷 Brasil</option>
@@ -132,337 +121,244 @@ audio{width:100%}
 <option value="Canada">🇨🇦 Canadá</option>
 <option value="Australia">🇦🇺 Australia</option>
 </select>
-
-<button onclick="buscarMusicaPais()">Buscar por país 🌎</button>
-<p id="estado-pais"></p>
-<div id="resultados-pais"></div>
+<button onclick="buscarPais()">Buscar país 🌎</button>
 </section>
 
 <div class="tabs">
-<button class="active" onclick="showTab('music',this)">Inicio</button>
-<button onclick="showTab('favorites',this)">♥ Favoritos</button>
-<button onclick="showTab('lists',this)">♫ Mi lista</button>
+<button class="active" onclick="cambiarTab('inicio',this)">Inicio</button>
+<button onclick="cambiarTab('favoritos',this)">♥ Favoritos</button>
+<button onclick="cambiarTab('lista',this)">♫ Mi lista</button>
 </div>
 
 <p id="status">Conecta Jamendo para comenzar.</p>
-<div id="songs"></div>
+<section class="section">
+<div id="songs" class="grid">
+<div class="empty">Tus canciones aparecerán aquí.</div>
+</div>
+</section>
+
+</main>
 
 <div id="player">
-<b id="playing">Selecciona una canción</b>
+<div class="player-inner">
+<b id="playing">🎵 Selecciona una canción</b>
 <audio id="audio" controls></audio>
+</div>
 </div>
 
 <script>
-const CLIENT_DEFAULT = "93852133";
+const CLIENT_DEFAULT="93852133";
+const API="https://api.jamendo.com/v3.0";
+let tracks=[];
+let favorites=leer("miMusicaFavoritos");
+let playlist=leer("miMusicaLista");
+let tab="inicio";
 
-let tracks = [];
-let favorites = [];
-let tab = "music";
+const $=id=>document.getElementById(id);
 
-try{
- favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-}catch(e){
- favorites = [];
+function leer(key){
+ try{return JSON.parse(localStorage.getItem(key)||"[]")}
+ catch(e){return []}
 }
 
-document.getElementById("client").value =
- localStorage.getItem("jamendoID") || CLIENT_DEFAULT;
+$("client").value=localStorage.getItem("jamendoID")||CLIENT_DEFAULT;
 
-function getClientID(){
- return document.getElementById("client").value.trim();
-}
-
-function saveID(){
- const id = getClientID();
-
- if(!id){
-  alert("Escribe tu Client ID");
-  return;
- }
-
+function guardarID(){
+ const id=$("client").value.trim();
+ if(!id){alert("Escribe tu Client ID");return}
  localStorage.setItem("jamendoID",id);
- loadMusic();
+ $("status").textContent="Conexión guardada 💚";
+ cargar();
 }
 
-async function pedirCanciones(parametros={}){
- const id = getClientID();
+async function pedir(parametros={}){
+ const id=$("client").value.trim();
+ if(!id)throw Error("Falta el Client ID");
 
- if(!id) throw new Error("Falta el Client ID");
-
- const datos = new URLSearchParams({
+ const datos=new URLSearchParams({
   client_id:id,
   format:"json",
-  limit:"30",
+  limit:"50",
   audioformat:"mp32",
   ...parametros
  });
 
- const response = await fetch(
-  "https://api.jamendo.com/v3.0/tracks/?" + datos.toString()
- );
+ const respuesta=await fetch(API+"/tracks/?"+datos);
+ if(!respuesta.ok)throw Error("Error de conexión: "+respuesta.status);
 
- if(!response.ok){
-  throw new Error("Error de conexión");
- }
-
- const data = await response.json();
-
- if(!data.results){
-  throw new Error("Respuesta inválida");
- }
-
- return data.results;
+ const json=await respuesta.json();
+ if(!json.results)throw Error("Respuesta inválida de Jamendo");
+ return json.results.filter(t=>t.audio);
 }
 
-async function loadMusic(query=""){
- const id = getClientID();
-
- if(!id){
-  alert("Primero conecta tu Client ID de Jamendo");
-  return;
- }
-
- localStorage.setItem("jamendoID",id);
- document.getElementById("status").textContent =
- "Buscando canciones...";
-
+async function cargar(){
+ $("status").textContent="Cargando música...";
  try{
-  const parametros = {order:"popularity_total"};
-
-  if(query){
-   parametros.namesearch = query;
-  }
-
-  tracks = await pedirCanciones(parametros);
-  tab = "music";
-  render();
-
-  document.getElementById("status").textContent =
-   tracks.length + " canciones encontradas 💚";
-
- }catch(error){
-  document.getElementById("status").textContent =
-   "Error de conexión. Revisa tu Client ID e Internet.";
+  tracks=await pedir({order:"popularity_total"});
+  tab="inicio";
+  mostrar();
+  $("status").textContent=tracks.length+" canciones encontradas 💚";
+ }catch(e){
+  $("status").textContent="No se pudo cargar la música. Revisa Internet o tu Client ID.";
  }
 }
 
-function searchMusic(){
- const q = document.getElementById("search").value.trim();
-
- if(q){
-  loadMusic(q);
- }
-}
-
-async function buscarMusicaPais(){
- const pais = document.getElementById("pais-musica").value;
- const resultados = document.getElementById("resultados-pais");
- const estado = document.getElementById("estado-pais");
-
- if(!pais){
-  estado.textContent = "Primero elegí un país.";
-  return;
- }
-
- if(!getClientID()){
-  estado.textContent = "Primero conecta Jamendo.";
-  return;
- }
-
- resultados.innerHTML = "";
- estado.textContent = "Buscando música de " + pais + "...";
-
- const etiquetas = {
-  Argentina:["rock","folk","cumbia","tango"],
-  Paraguay:["guarani","folk","paraguay"],
-  Brasil:["samba","bossa nova","brazil"],
-  Mexico:["ranchera","mariachi","mexico"],
-  Colombia:["cumbia","vallenato","colombia"],
-  Chile:["folk","rock","chile"],
-  Uruguay:["candombe","folk","uruguay"],
-  Peru:["andean","folk","peru"],
-  Bolivia:["andean","folk","bolivia"],
-  Venezuela:["llanera","folk","venezuela"],
-  Ecuador:["andean","folk","ecuador"],
-  España:["flamenco","spanish","pop"],
-  "Estados Unidos":["country","rock","blues"],
-  Francia:["chanson","french","pop"],
-  Italia:["italian","pop","rock"],
-  Portugal:["fado","portuguese","folk"],
-  Alemania:["electronic","rock","german"],
-  "Reino Unido":["british","rock","pop"],
-  Japon:["japanese","japan","pop"],
-  Corea:["korean","korea","pop"],
-  India:["indian","india","folk"],
-  Canada:["canadian","folk","rock"],
-  Australia:["australian","rock","pop"]
- };
-
+async function buscar(){
+ const q=$("search").value.trim();
+ if(!q){$("status").textContent="Escribe una canción o artista.";return}
+ $("status").textContent="Buscando "+q+"...";
  try{
-  const estilos = etiquetas[pais] || [pais];
+  tracks=await pedir({namesearch:q,order:"relevance"});
+  tab="inicio";
+  mostrar();
+  $("status").textContent=tracks.length+" resultados encontrados.";
+ }catch(e){
+  $("status").textContent="Error al buscar. Intenta nuevamente.";
+ }
+}
 
-  estado.textContent =
-   "Buscando canciones de " + pais + "...";
+const etiquetas={
+ Paraguay:["guarani","folk","paraguay"],
+ Argentina:["rock","folk","cumbia","tango"],
+ Brasil:["samba","bossa nova","brazil"],
+ Mexico:["ranchera","mariachi","mexico"],
+ Colombia:["cumbia","vallenato","colombia"],
+ Chile:["folk","rock","chile"],
+ Uruguay:["candombe","folk","uruguay"],
+ Peru:["andean","folk","peru"],
+ Bolivia:["andean","folk","bolivia"],
+ Venezuela:["llanera","folk","venezuela"],
+ Ecuador:["andean","folk","ecuador"],
+ España:["flamenco","spanish","pop"],
+ "Estados Unidos":["country","rock","blues"],
+ Francia:["chanson","french","pop"],
+ Italia:["italian","pop","rock"],
+ Portugal:["fado","portuguese","folk"],
+ Alemania:["electronic","rock","german"],
+ "Reino Unido":["british","rock","pop"],
+ Japon:["japanese","japan","pop"],
+ Corea:["korean","korea","pop"],
+ India:["indian","india","folk"],
+ Canada:["canadian","folk","rock"],
+ Australia:["australian","rock","pop"]
+};
 
-  const respuestas = await Promise.allSettled(
-   estilos.map(estilo =>
-    pedirCanciones({
-     fuzzytags:estilo,
-     order:"popularity_total"
-    })
-   )
+async function buscarPais(){
+ const pais=$("pais-musica").value;
+ if(!pais){$("status").textContent="Elige un país primero.";return}
+
+ $("status").textContent="Buscando música relacionada con "+pais+"...";
+ try{
+  const estilos=etiquetas[pais]||[pais];
+  const respuestas=await Promise.allSettled(
+   estilos.map(tag=>pedir({
+    fuzzytags:tag,
+    order:"popularity_total"
+   }))
   );
 
-  const unicas = new Map();
-
-  respuestas.forEach(respuesta=>{
-   if(respuesta.status === "fulfilled"){
-    respuesta.value.forEach(cancion=>{
-     unicas.set(String(cancion.id),cancion);
-    });
+  const unicas=new Map();
+  respuestas.forEach(r=>{
+   if(r.status==="fulfilled"){
+    r.value.forEach(t=>unicas.set(String(t.id),t));
    }
   });
 
-  const canciones = Array.from(unicas.values());
-
-  mostrarCancionesPais(canciones);
-
-  if(canciones.length){
-   estado.textContent =
-    canciones.length + " canciones encontradas relacionadas con " + pais + " 💚";
-  }else{
-   estado.textContent =
-    "Jamendo no tiene resultados disponibles para esta búsqueda.";
-  }
-
- }catch(error){
-  console.error(error);
-  estado.textContent =
-   "Error de conexión con Jamendo. Intenta nuevamente.";
+  tracks=Array.from(unicas.values());
+  tab="inicio";
+  mostrar();
+  $("status").textContent=tracks.length+
+   " canciones relacionadas con "+pais+".";
+ }catch(e){
+  $("status").textContent="No se pudo buscar en Jamendo.";
  }
 }
 
-function mostrarCancionesPais(canciones){
- const box = document.getElementById("resultados-pais");
- box.innerHTML = "";
-
- canciones.forEach(cancion=>{
-  const div = document.createElement("div");
-  div.className = "song";
-
-  const img = document.createElement("img");
-  img.src = cancion.album_image || "";
-  img.alt = "Portada";
-
-  const info = document.createElement("div");
-
-  const titulo = document.createElement("b");
-  titulo.textContent = cancion.name;
-
-  const artista = document.createElement("small");
-  artista.textContent = cancion.artist_name;
-
-  info.append(titulo,artista);
-
-  const play = document.createElement("button");
-  play.textContent = "▶";
-  play.onclick = ()=>playSong(cancion);
-
-  div.append(img,info,play);
-  box.appendChild(div);
- });
+function cambiarTab(nombre,boton){
+ tab=nombre;
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+ boton.classList.add("active");
+ mostrar();
 }
 
-function showTab(name,btn){
- tab = name;
+function mostrar(){
+ const box=$("songs");
+ box.innerHTML="";
 
- document.querySelectorAll(".tabs button").forEach(b=>{
-  b.classList.remove("active");
- });
-
- btn.classList.add("active");
- render();
-}
-
-function render(){
- const box = document.getElementById("songs");
- box.innerHTML = "";
-
- let items = tracks;
-
- if(tab === "favorites" || tab === "lists"){
-  items = tracks.filter(t=>
-   favorites.includes(String(t.id))
-  );
- }
+ let items=tracks;
+ if(tab==="favoritos")items=favorites;
+ if(tab==="lista")items=playlist;
 
  if(!items.length){
-  box.innerHTML = "<p>No hay canciones aquí todavía.</p>";
+  box.innerHTML='<div class="empty">Todavía no hay canciones aquí.</div>';
   return;
  }
 
  items.forEach(t=>{
-  const el = document.createElement("div");
-  el.className = "song";
+  const id=String(t.id);
+  const card=document.createElement("div");
+  card.className="card";
 
-  const img = document.createElement("img");
-  img.src = t.album_image || "";
-  img.alt = "Portada";
+  const img=document.createElement("img");
+  img.src=t.album_image||"";
+  img.alt="Portada";
+  img.onerror=()=>img.style.visibility="hidden";
 
-  const info = document.createElement("div");
+  const title=document.createElement("b");
+  title.textContent=t.name||"Canción";
 
-  const title = document.createElement("b");
-  title.textContent = t.name;
+  const artist=document.createElement("small");
+  artist.textContent=t.artist_name||"Artista";
 
-  const artist = document.createElement("small");
-  artist.textContent = t.artist_name;
+  const actions=document.createElement("div");
+  actions.className="actions";
 
-  info.append(title,artist);
+  const play=document.createElement("button");
+  play.textContent="▶";
+  play.onclick=()=>reproducir(t);
 
-  const play = document.createElement("button");
-  play.textContent = "▶";
-  play.onclick = ()=>playSong(t);
+  const fav=document.createElement("button");
+  fav.className="secondary";
+  fav.textContent=favorites.some(x=>String(x.id)===id)?"♥":"♡";
+  fav.onclick=()=>alternar(favorites,t,"miMusicaFavoritos");
 
-  const fav = document.createElement("button");
-  fav.textContent = favorites.includes(String(t.id)) ? "♥" : "♡";
-  fav.onclick = ()=>toggleFav(t.id);
+  const add=document.createElement("button");
+  add.className="secondary";
+  add.textContent=playlist.some(x=>String(x.id)===id)?"✓":"+";
+  add.onclick=()=>alternar(playlist,t,"miMusicaLista");
 
-  el.append(img,info,play,fav);
-  box.append(el);
+  actions.append(play,fav,add);
+  card.append(img,title,artist,actions);
+  box.append(card);
  });
 }
 
-function playSong(t){
- if(!t.audio){
-  alert("Audio no disponible");
-  return;
- }
+function alternar(array,cancion,key){
+ const id=String(cancion.id);
+ const index=array.findIndex(x=>String(x.id)===id);
+ if(index>=0)array.splice(index,1);
+ else array.push(cancion);
+ localStorage.setItem(key,JSON.stringify(array));
+ mostrar();
+}
 
- document.getElementById("playing").textContent =
-  t.name + " - " + t.artist_name;
-
- const audio = document.getElementById("audio");
- audio.src = t.audio;
-
- audio.play().catch(()=>{
-  alert("Toca el botón de reproducir para escuchar.");
+function reproducir(t){
+ if(!t.audio){alert("Audio no disponible");return}
+ $("playing").textContent=t.name+" — "+t.artist_name;
+ $("audio").src=t.audio;
+ $("audio").play().catch(()=>{
+  $("status").textContent="Pulsa reproducir en el reproductor.";
  });
 }
 
-function toggleFav(id){
- id = String(id);
-
- favorites = favorites.includes(id)
-  ? favorites.filter(x=>x!==id)
-  : [...favorites,id];
-
- localStorage.setItem("favorites",JSON.stringify(favorites));
- render();
+if("serviceWorker" in navigator){
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("./service-worker.js")
+   .catch(e=>console.log("Service worker:",e));
+ });
 }
 
-if(getClientID()){
- loadMusic();
-}
+if($("client").value)cargar();
 </script>
 
 </body>
