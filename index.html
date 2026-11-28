@@ -174,27 +174,42 @@ function getClientID(){
 
 function saveID(){
  const id = getClientID();
+
  if(!id){
   alert("Escribe tu Client ID");
   return;
  }
+
  localStorage.setItem("jamendoID",id);
  loadMusic();
 }
 
-async function pedirCanciones(parametros){
+async function pedirCanciones(parametros={}){
  const id = getClientID();
+
  if(!id) throw new Error("Falta el Client ID");
 
- const url = "https://api.jamendo.com/v3.0/tracks/?" +
- "client_id=" + encodeURIComponent(id) +
- "&format=json&limit=30&audioformat=mp32&" + parametros;
+ const datos = new URLSearchParams({
+  client_id:id,
+  format:"json",
+  limit:"30",
+  audioformat:"mp32",
+  ...parametros
+ });
 
- const response = await fetch(url);
- if(!response.ok) throw new Error("Error de conexión");
+ const response = await fetch(
+  "https://api.jamendo.com/v3.0/tracks/?" + datos.toString()
+ );
+
+ if(!response.ok){
+  throw new Error("Error de conexión");
+ }
 
  const data = await response.json();
- if(!data.results) throw new Error("Respuesta inválida");
+
+ if(!data.results){
+  throw new Error("Respuesta inválida");
+ }
 
  return data.results;
 }
@@ -212,9 +227,10 @@ async function loadMusic(query=""){
  "Buscando canciones...";
 
  try{
-  let parametros = "order=popularity_total";
+  const parametros = {order:"popularity_total"};
+
   if(query){
-   parametros += "&namesearch=" + encodeURIComponent(query);
+   parametros.namesearch = query;
   }
 
   tracks = await pedirCanciones(parametros);
@@ -226,13 +242,16 @@ async function loadMusic(query=""){
 
  }catch(error){
   document.getElementById("status").textContent =
-   "No se pudo cargar la música. Revisa tu conexión e ID.";
+   "Error de conexión. Revisa tu Client ID e Internet.";
  }
 }
 
 function searchMusic(){
  const q = document.getElementById("search").value.trim();
- if(q) loadMusic(q);
+
+ if(q){
+  loadMusic(q);
+ }
 }
 
 async function buscarMusicaPais(){
@@ -254,52 +273,74 @@ async function buscarMusicaPais(){
  estado.textContent = "Buscando música de " + pais + "...";
 
  const etiquetas = {
-  Paraguay:"paraguay guarani folk",
-  Brasil:"brazil samba bossa nova",
-  Mexico:"mexico ranchera mariachi",
-  Colombia:"colombia cumbia vallenato",
-  Chile:"chile folk rock",
-  Uruguay:"uruguay candombe folk",
-  Peru:"peru andean folk",
-  Bolivia:"bolivia andean folk",
-  Venezuela:"venezuela llanera folk",
-  Ecuador:"ecuador andean folk",
-  España:"spain flamenco pop",
-  "Estados Unidos":"united states country rock",
-  Francia:"france chanson pop",
-  Italia:"italy italian pop",
-  Portugal:"portugal fado",
-  Alemania:"germany electronic rock",
-  "Reino Unido":"united kingdom rock pop",
-  Japon:"japan japanese pop",
-  Corea:"korea korean pop",
-  India:"india indian music",
-  Canada:"canada folk rock",
-  Australia:"australia rock"
+  Argentina:["rock","folk","cumbia","tango"],
+  Paraguay:["guarani","folk","paraguay"],
+  Brasil:["samba","bossa nova","brazil"],
+  Mexico:["ranchera","mariachi","mexico"],
+  Colombia:["cumbia","vallenato","colombia"],
+  Chile:["folk","rock","chile"],
+  Uruguay:["candombe","folk","uruguay"],
+  Peru:["andean","folk","peru"],
+  Bolivia:["andean","folk","bolivia"],
+  Venezuela:["llanera","folk","venezuela"],
+  Ecuador:["andean","folk","ecuador"],
+  España:["flamenco","spanish","pop"],
+  "Estados Unidos":["country","rock","blues"],
+  Francia:["chanson","french","pop"],
+  Italia:["italian","pop","rock"],
+  Portugal:["fado","portuguese","folk"],
+  Alemania:["electronic","rock","german"],
+  "Reino Unido":["british","rock","pop"],
+  Japon:["japanese","japan","pop"],
+  Corea:["korean","korea","pop"],
+  India:["indian","india","folk"],
+  Canada:["canadian","folk","rock"],
+  Australia:["australian","rock","pop"]
  };
 
  try{
-  let canciones = [];
+  const estilos = etiquetas[pais] || [pais];
 
-if(pais === "Argentina"){
- estado.textContent = "Buscando artistas de Argentina...";
+  estado.textContent =
+   "Buscando canciones de " + pais + "...";
 
- const id = getClientID();
+  const respuestas = await Promise.allSettled(
+   estilos.map(estilo =>
+    pedirCanciones({
+     fuzzytags:estilo,
+     order:"popularity_total"
+    })
+   )
+  );
 
- const url = "https://api.jamendo.com/v3.0/charts/track/?" +
-  "client_id=" + encodeURIComponent(id) +
-  "&format=json&limit=50&country=ARG";
+  const unicas = new Map();
 
- const respuesta = await fetch(url);
- const datos = await respuesta.json();
+  respuestas.forEach(respuesta=>{
+   if(respuesta.status === "fulfilled"){
+    respuesta.value.forEach(cancion=>{
+     unicas.set(String(cancion.id),cancion);
+    });
+   }
+  });
 
- const ids = (datos.results || []).map(c => c.id);
+  const canciones = Array.from(unicas.values());
 
- if(ids.length){
-  canciones = await pedirCanciones("id=" + ids.join("%2B"));
- }else{
-  canciones = [];
+  mostrarCancionesPais(canciones);
+
+  if(canciones.length){
+   estado.textContent =
+    canciones.length + " canciones encontradas relacionadas con " + pais + " 💚";
+  }else{
+   estado.textContent =
+    "Jamendo no tiene resultados disponibles para esta búsqueda.";
+  }
+
+ }catch(error){
+  console.error(error);
+  estado.textContent =
+   "Error de conexión con Jamendo. Intenta nuevamente.";
  }
+}
 
 function mostrarCancionesPais(canciones){
  const box = document.getElementById("resultados-pais");
@@ -314,6 +355,7 @@ function mostrarCancionesPais(canciones){
   img.alt = "Portada";
 
   const info = document.createElement("div");
+
   const titulo = document.createElement("b");
   titulo.textContent = cancion.name;
 
@@ -349,7 +391,9 @@ function render(){
  let items = tracks;
 
  if(tab === "favorites" || tab === "lists"){
-  items = tracks.filter(t=>favorites.includes(String(t.id)));
+  items = tracks.filter(t=>
+   favorites.includes(String(t.id))
+  );
  }
 
  if(!items.length){
@@ -399,6 +443,7 @@ function playSong(t){
 
  const audio = document.getElementById("audio");
  audio.src = t.audio;
+
  audio.play().catch(()=>{
   alert("Toca el botón de reproducir para escuchar.");
  });
