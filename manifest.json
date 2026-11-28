@@ -1,0 +1,13 @@
+
+{
+  "id": "/",
+  "name": "Mi Música",
+  "short_name": "Mi Música",
+  "description": "Tu reproductor de música gratis por Internet",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00c853",
+  "orientation": "portrait"
+}
