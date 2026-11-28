@@ -281,19 +281,33 @@ async function buscarMusicaPais(){
  try{
   let canciones = [];
 
-  if(pais === "Argentina"){
-   estado.textContent = "Buscando rock, folklore, cumbia y tango...";
+if(pais === "Argentina"){
+ estado.textContent = "Buscando artistas de Argentina...";
 
-   const estilos = ["rock","folk","cumbia","tango"];
+ const id = getClientID();
 
-   const respuestas = await Promise.all(
-    estilos.map(estilo =>
-     pedirCanciones(
-      "fuzzytags=" + encodeURIComponent(estilo) +
-      "&order=popularity_total"
-     )
-    )
-   );
+ const url = "https://api.jamendo.com/v3.0/charts/track/?" +
+  "client_id=" + encodeURIComponent(id) +
+  "&format=json&limit=50&country=ARG";
+
+ const respuesta = await fetch(url);
+ const datos = await respuesta.json();
+
+ const ids = (datos.results || []).map(c => c.id);
+
+ if(ids.length){
+  canciones = await pedirCanciones("id=" + ids.join("%2B"));
+ }else{
+  canciones = [];
+ }
+
+}else{
+ const tags = etiquetas[pais] || pais;
+ canciones = await pedirCanciones(
+  "fuzzytags=" + encodeURIComponent(tags) +
+  "&order=popularity_total"
+ );
+}
 
    const unicas = new Map();
 
