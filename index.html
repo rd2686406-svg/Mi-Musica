@@ -51,31 +51,67 @@ audio{width:100%}
 </section>
 
 <script>
+
 async function buscarMusicaPais() {
   const pais = document.getElementById("pais-musica").value;
   const resultados = document.getElementById("resultados-pais");
+
   if (!pais) return;
-  resultados.textContent = "Buscando música...";
+
+  const codigos = {
+    "Paraguay": "PRY",
+    "Argentina": "ARG",
+    "Brasil": "BRA",
+    "Mexico": "MEX",
+    "Colombia": "COL",
+    "España": "ESP",
+    "Estados Unidos": "USA",
+    "Francia": "FRA",
+    "Italia": "ITA",
+    "Japón": "JPN",
+    "Corea": "KOR"
+  };
+
+  const clientId = localStorage.getItem("jamendoID") || "93852133";
+
+  resultados.textContent = "Buscando música de " + pais + "...";
+
   try {
-    const url = "https://api.jamendo.com/v3.0/tracks/?client_id=93852133&format=json&limit=20&search=" + encodeURIComponent(pais) + "&audioformat=mp31";
+    const url = "https://api.jamendo.com/v3.0/charts/track/?" +
+      "client_id=" + encodeURIComponent(clientId) +
+      "&format=json&limit=50&audioformat=mp32&country=" +
+      codigos[pais];
+
     const respuesta = await fetch(url);
     const datos = await respuesta.json();
+
+    if (!datos.results) throw new Error("Error de Jamendo");
+
     resultados.innerHTML = "";
+
     datos.results.forEach(cancion => {
       const div = document.createElement("div");
+      div.className = "song";
+
       const titulo = document.createElement("p");
       titulo.textContent = cancion.artist_name + " - " + cancion.name;
+
       const audio = document.createElement("audio");
       audio.controls = true;
       audio.src = cancion.audio;
+
       div.append(titulo, audio);
       resultados.appendChild(div);
     });
-    if (!datos.results.length) resultados.textContent = "No encontramos canciones.";
+
+    if (!datos.results.length) {
+      resultados.textContent = "No encontramos canciones de este país.";
+    }
   } catch (error) {
-    resultados.textContent = "No se pudo cargar la música. Intentá nuevamente.";
+    resultados.textContent = "Error al cargar la música. Intenta nuevamente.";
   }
 }
+
 </script>
 
 
