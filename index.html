@@ -5,24 +5,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#080b0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Mi Música</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json">
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:18px;background:#080b0a;color:white;font-family:Arial,sans-serif}
-h1{text-align:center;color:#1ed760}
+body{
+ margin:0;padding:18px 15px 35px;
+ background:#080b0a;color:white;
+ font-family:Arial,sans-serif;
+}
+h1{text-align:center;color:#1ed760;font-size:30px}
+h3{margin-top:25px}
 .sub{text-align:center;color:#aaa}
-input,button{width:100%;padding:14px;margin:7px 0;border:0;border-radius:10px;font-size:16px}
+button,input{
+ width:100%;padding:13px;margin:6px 0;
+ border:0;border-radius:11px;font-size:15px;
+}
+button{
+ background:#1ed760;color:#071008;
+ font-weight:bold;cursor:pointer;
+}
+button:disabled{opacity:.45}
 input{background:#202820;color:white}
-button{background:#1ed760;color:#061006;font-weight:bold;cursor:pointer}
-.spotify{background:#1ed760}
 .secundario{background:#303a32;color:white}
-.resultado{background:#18201b;padding:13px;border-radius:12px;margin:10px 0}
+.azul{background:#245d9c;color:white}
+.rojo{background:#783333;color:white}
+#estado{text-align:center;color:#1ed760;min-height:22px}
+.resultado{
+ background:#18201b;padding:13px;
+ border-radius:13px;margin:10px 0;
+ overflow-wrap:anywhere;
+}
 .resultado small{color:#aaa}
-.resultado button{width:auto;padding:9px 12px;font-size:14px}
-#estado{color:#1ed760;text-align:center}
-audio{width:100%;margin-top:12px}
+.resultado button{
+ width:auto;display:inline-block;
+ padding:9px 12px;font-size:13px;
+}
+.botones{display:flex;gap:7px;flex-wrap:wrap}
+.botones button{flex:1}
+audio{width:100%;margin:12px 0}
+.panel{
+ background:#151d18;padding:15px;
+ border-radius:15px;margin-top:15px;
+}
+#cancionActual{font-weight:bold;text-align:center}
+#artistaActual{text-align:center;color:#aaa}
+#volumen{width:100%;accent-color:#1ed760}
+.etiqueta{color:#aaa;font-size:12px}
+footer{text-align:center;color:#777;font-size:12px;margin-top:30px}
 </style>
 </head>
 
@@ -31,15 +64,10 @@ audio{width:100%;margin-top:12px}
 <h1>🎵 Mi Música</h1>
 <p class="sub">Toda tu música en un solo lugar</p>
 
-<button class="spotify" onclick="conectarSpotify()">
-🟢 Conectar Spotify
-</button>
+<button onclick="conectarSpotify()">🟢 Conectar Spotify</button>
+<button class="secundario" onclick="desconectarSpotify()">Desconectar Spotify</button>
 
-<button class="secundario" onclick="desconectarSpotify()">
-Desconectar Spotify
-</button>
-
-<p id="estado">Listo para buscar música</p>
+<p id="estado">Listo para escuchar música</p>
 
 <input id="busqueda" placeholder="Escribe una canción o artista">
 
@@ -48,13 +76,39 @@ Desconectar Spotify
 <div id="resultados"></div>
 
 <h3>❤️ Mis favoritos</h3>
+<div class="botones">
+ <button class="secundario" onclick="reproducirFavoritos()">▶ Reproducir favoritos</button>
+ <button class="secundario" onclick="mezclarFavoritos()">🔀 Aleatorio</button>
+</div>
 <div id="favoritos"></div>
 
 <h3>🎧 Reproductor</h3>
-<p id="cancionActual">Selecciona una canción</p>
-<audio id="reproductor" controls></audio>
+<div class="panel">
+ <p id="cancionActual">Selecciona una canción</p>
+ <p id="artistaActual">Mi Música</p>
+
+ <audio id="reproductor" controls preload="none"></audio>
+
+ <div class="botones">
+  <button class="secundario" onclick="anterior()">⏮ Anterior</button>
+  <button onclick="alternarReproduccion()" id="playPause">▶ / ⏸</button>
+  <button class="secundario" onclick="siguiente()">Siguiente ⏭</button>
+ </div>
+
+ <p class="etiqueta">🔊 Volumen</p>
+ <input id="volumen" type="range" min="0" max="1" step="0.01" value="1">
+
+ <div class="botones">
+  <button class="secundario" id="aleatorio" onclick="alternarAleatorio()">🔀 Aleatorio: NO</button>
+  <button class="secundario" onclick="detener()">⏹ Detener</button>
+ </div>
+</div>
+
+<footer>Mi Música · Tu colección musical</footer>
 
 <script>
+"use strict";
+
 const JAMENDO_ID="93852133";
 const AUDIUS_API="https://api.audius.co/v1";
 
@@ -62,22 +116,35 @@ const SPOTIFY_CLIENT_ID="38ddc7a29f4345699a81c5fd7685256d";
 const SPOTIFY_REDIRECT_URI=
 "https://rd2686406-svg.github.io/Mi-Musica/";
 
+const $=id=>document.getElementById(id);
+const audio=$("reproductor");
+
 let token=localStorage.getItem("spotify_access_token")||"";
 let refreshToken=localStorage.getItem("spotify_refresh_token")||"";
 let expiracion=Number(localStorage.getItem("spotify_expiration")||0);
 
-let favoritos=JSON.parse(
- localStorage.getItem("miMusicaFavoritos")||
- localStorage.getItem("favorites")||"[]"
-);
+let favoritos=[];
+try{
+ favoritos=JSON.parse(localStorage.getItem("miMusicaFavoritos")||"[]");
+ if(!Array.isArray(favoritos))favoritos=[];
+}catch(e){favoritos=[];}
 
 let cancionesDisponibles={};
+let cola=[];
+let posicion=-1;
+let aleatorio=false;
+
+function estado(t){$("estado").textContent=t;}
 
 function escapar(t){
  return String(t||"").replace(/[&<>"']/g,c=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",
  '"':"&quot;","'":"&#39;"
  })[c]);
+}
+
+function guardarDatos(){
+ localStorage.setItem("miMusicaFavoritos",JSON.stringify(favoritos));
 }
 
 function guardarToken(d){
@@ -91,12 +158,6 @@ function guardarToken(d){
 
  expiracion=Date.now()+(d.expires_in*1000);
  localStorage.setItem("spotify_expiration",String(expiracion));
-}
-
-function generarAleatorio(n){
- const bytes=new Uint8Array(n);
- crypto.getRandomValues(bytes);
- return Array.from(bytes,b=>String.fromCharCode(b)).join("");
 }
 
 function base64url(bytes){
@@ -114,13 +175,9 @@ async function crearChallenge(verifier){
 
 async function conectarSpotify(){
  try{
-  const verifier=base64url(
-   crypto.getRandomValues(new Uint8Array(64))
-  );
+  const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
   const challenge=await crearChallenge(verifier);
-  const state=base64url(
-   crypto.getRandomValues(new Uint8Array(16))
-  );
+  const state=base64url(crypto.getRandomValues(new Uint8Array(16)));
 
   sessionStorage.setItem("spotify_verifier",verifier);
   sessionStorage.setItem("spotify_state",state);
@@ -131,12 +188,12 @@ async function conectarSpotify(){
    redirect_uri:SPOTIFY_REDIRECT_URI,
    code_challenge_method:"S256",
    code_challenge:challenge,
-   state:state
+   state
   });
 
   location.href="https://accounts.spotify.com/authorize?"+params;
  }catch(e){
-  alert("No se pudo iniciar la conexión con Spotify.");
+  alert("No se pudo iniciar Spotify.");
  }
 }
 
@@ -148,21 +205,18 @@ async function procesarAutorizacion(){
 
  if(error){
   history.replaceState({},document.title,location.pathname);
-  document.getElementById("estado").textContent=
-   "No se autorizó Spotify.";
+  estado("Spotify no fue autorizado.");
   return;
  }
-
  if(!code)return;
 
- const estadoGuardado=sessionStorage.getItem("spotify_state");
+ const guardado=sessionStorage.getItem("spotify_state");
  const verifier=sessionStorage.getItem("spotify_verifier");
 
  history.replaceState({},document.title,location.pathname);
 
- if(!state||state!==estadoGuardado||!verifier){
-  document.getElementById("estado").textContent=
-   "Error de seguridad al conectar Spotify.";
+ if(!state||state!==guardado||!verifier){
+  estado("Error de seguridad al conectar Spotify.");
   return;
  }
 
@@ -173,131 +227,184 @@ async function procesarAutorizacion(){
    body:new URLSearchParams({
     client_id:SPOTIFY_CLIENT_ID,
     grant_type:"authorization_code",
-    code:code,
+    code,
     redirect_uri:SPOTIFY_REDIRECT_URI,
     code_verifier:verifier
    })
   });
 
   const d=await r.json();
-
-  if(!r.ok)throw Error(d.error_description||"Error de autorización");
+  if(!r.ok)throw Error(d.error_description||"Autorización fallida");
 
   guardarToken(d);
   sessionStorage.removeItem("spotify_verifier");
   sessionStorage.removeItem("spotify_state");
-
-  document.getElementById("estado").textContent=
-   "Spotify conectado correctamente. 🎵";
+  estado("Spotify conectado correctamente 🎵");
  }catch(e){
-  document.getElementById("estado").textContent=
-   "Error conectando Spotify: "+e.message;
+  estado("Error de Spotify: "+e.message);
  }
 }
 
 async function obtenerToken(){
  if(token&&Date.now()<expiracion-60000)return token;
+ if(!refreshToken)return "";
 
- if(!refreshToken){
-  token="";
-  return "";
- }
+ try{
+  const r=await fetch("https://accounts.spotify.com/api/token",{
+   method:"POST",
+   headers:{"Content-Type":"application/x-www-form-urlencoded"},
+   body:new URLSearchParams({
+    client_id:SPOTIFY_CLIENT_ID,
+    grant_type:"refresh_token",
+    refresh_token:refreshToken
+   })
+  });
 
- const r=await fetch("https://accounts.spotify.com/api/token",{
-  method:"POST",
-  headers:{"Content-Type":"application/x-www-form-urlencoded"},
-  body:new URLSearchParams({
-   client_id:SPOTIFY_CLIENT_ID,
-   grant_type:"refresh_token",
-   refresh_token:refreshToken
-  })
- });
+  const d=await r.json();
+  if(!r.ok)throw Error("Token vencido");
 
- const d=await r.json();
-
- if(!r.ok){
-  localStorage.removeItem("spotify_access_token");
-  localStorage.removeItem("spotify_refresh_token");
-  localStorage.removeItem("spotify_expiration");
+  guardarToken(d);
+  return token;
+ }catch(e){
   token="";
   refreshToken="";
+  ["spotify_access_token","spotify_refresh_token","spotify_expiration"]
+   .forEach(k=>localStorage.removeItem(k));
   return "";
  }
-
- guardarToken(d);
- return token;
 }
 
 function desconectarSpotify(){
  token="";
  refreshToken="";
  expiracion=0;
-
- ["spotify_access_token","spotify_refresh_token",
-  "spotify_expiration"].forEach(k=>localStorage.removeItem(k));
-
- document.getElementById("estado").textContent=
-  "Spotify desconectado.";
+ ["spotify_access_token","spotify_refresh_token","spotify_expiration"]
+  .forEach(k=>localStorage.removeItem(k));
+ estado("Spotify desconectado.");
 }
 
-function reproducir(url,titulo){
- if(!url){
-  alert("Esta canción no tiene reproducción disponible aquí.");
-  return;
- }
- const audio=document.getElementById("reproductor");
- audio.src=url;
- audio.play().catch(()=>alert("No se pudo reproducir."));
- document.getElementById("cancionActual").textContent=titulo;
+function guardarCancion(c){
+ cancionesDisponibles[c.id]=c;
 }
 
-function reproducirPorId(id){
- const c=cancionesDisponibles[id];
- if(c)reproducir(c.audio,c.titulo);
+function esFavorita(id){
+ return favoritos.some(c=>c.id===id);
 }
 
-function abrirPorId(id){
- const c=cancionesDisponibles[id];
- if(c&&c.enlace)window.open(c.enlace,"_blank");
-}
-
-function guardarFavoritoPorId(id){
+function alternarFavorito(id){
  const c=cancionesDisponibles[id];
  if(!c)return;
 
- if(favoritos.some(x=>x.id===id)){
+ if(esFavorita(id)){
   favoritos=favoritos.filter(x=>x.id!==id);
  }else{
   favoritos.push(c);
  }
-
  guardarDatos();
  mostrarFavoritos();
+ mostrarCanciones(Object.values(cancionesDisponibles));
 }
 
 function quitarFavorito(id){
- favoritos=favoritos.filter(x=>x.id!==id);
+ favoritos=favoritos.filter(c=>c.id!==id);
  guardarDatos();
  mostrarFavoritos();
 }
 
-function guardarDatos(){
- localStorage.setItem("miMusicaFavoritos",JSON.stringify(favoritos));
+function reproducir(c){
+ if(!c||!c.audio){
+  if(c&&c.enlace)window.open(c.enlace,"_blank","noopener");
+  else alert("Esta canción no tiene reproducción disponible.");
+  return;
+ }
+
+ audio.src=c.audio;
+ $("cancionActual").textContent=c.titulo;
+ $("artistaActual").textContent=c.artista;
+ audio.play().catch(()=>estado("No se pudo reproducir esta canción."));
+
+ if("mediaSession" in navigator){
+  navigator.mediaSession.metadata=new MediaMetadata({
+   title:c.titulo,
+   artist:c.artista,
+   album:c.fuente
+  });
+  navigator.mediaSession.setActionHandler("play",()=>audio.play());
+  navigator.mediaSession.setActionHandler("pause",()=>audio.pause());
+  navigator.mediaSession.setActionHandler("previoustrack",anterior);
+  navigator.mediaSession.setActionHandler("nexttrack",siguiente);
+ }
 }
 
-function reproducirFavorito(id){
- const c=favoritos.find(x=>x.id===id);
- if(c)reproducir(c.audio,c.titulo);
+function reproducirPorId(id){
+ const lista=Object.values(cancionesDisponibles);
+ cola=lista.filter(c=>c.audio);
+ posicion=cola.findIndex(c=>c.id===id);
+ if(posicion<0){
+  const c=cancionesDisponibles[id];
+  reproducir(c);
+  return;
+ }
+ reproducir(cola[posicion]);
 }
 
-function abrirFavorito(id){
- const c=favoritos.find(x=>x.id===id);
- if(c&&c.enlace)window.open(c.enlace,"_blank");
+function siguiente(){
+ if(!cola.length)return;
+ if(aleatorio&&cola.length>1){
+  let nueva;
+  do{nueva=Math.floor(Math.random()*cola.length);}
+  while(nueva===posicion);
+  posicion=nueva;
+ }else{
+  posicion=(posicion+1)%cola.length;
+ }
+ reproducir(cola[posicion]);
+}
+
+function anterior(){
+ if(!cola.length)return;
+ if(audio.currentTime>3){
+  audio.currentTime=0;
+  return;
+ }
+ posicion=(posicion-1+cola.length)%cola.length;
+ reproducir(cola[posicion]);
+}
+
+audio.addEventListener("ended",()=>{
+ if(cola.length)siguiente();
+});
+
+function alternarReproduccion(){
+ if(audio.paused){
+  audio.play().catch(()=>estado("No se pudo iniciar la reproducción."));
+ }else{
+  audio.pause();
+ }
+}
+
+function detener(){
+ audio.pause();
+ audio.currentTime=0;
+}
+
+$("volumen").addEventListener("input",e=>{
+ audio.volume=Number(e.target.value);
+});
+
+function alternarAleatorio(){
+ aleatorio=!aleatorio;
+ $("aleatorio").textContent="🔀 Aleatorio: "+(aleatorio?"SÍ":"NO");
+}
+
+function abrirCancion(id){
+ const c=cancionesDisponibles[id];
+ if(c&&c.enlace)window.open(c.enlace,"_blank","noopener");
 }
 
 function mostrarCanciones(lista){
- const cont=document.getElementById("resultados");
- cancionesDisponibles=Object.fromEntries(lista.map(c=>[c.id,c]));
+ const cont=$("resultados");
+ lista.forEach(guardarCancion);
 
  if(!lista.length){
   cont.innerHTML="<p>No se encontraron canciones.</p>";
@@ -307,16 +414,21 @@ function mostrarCanciones(lista){
  cont.innerHTML=lista.map(c=>`
   <div class="resultado">
    <strong>${escapar(c.titulo)}</strong><br>
-   <small>${escapar(c.artista)} · ${escapar(c.fuente)}</small><br>
-   ${c.audio?`<button onclick="reproducirPorId('${escapar(c.id)}')">▶ Escuchar</button>`:""}
-   ${c.enlace?`<button onclick="abrirPorId('${escapar(c.id)}')">Abrir</button>`:""}
-   <button onclick="guardarFavoritoPorId('${escapar(c.id)}')">❤️ Guardar</button>
+   <small>${escapar(c.artista)} · ${escapar(c.fuente)}</small>
+   <div class="botones">
+    ${c.audio?`<button onclick="reproducirPorId('${escapar(c.id)}')">▶ Escuchar</button>`:""}
+    ${c.enlace?`<button class="secundario" onclick="abrirCancion('${escapar(c.id)}')">Abrir</button>`:""}
+    <button class="secundario" onclick="alternarFavorito('${escapar(c.id)}')">
+     ${esFavorita(c.id)?"❤️ Guardada":"♡ Guardar"}
+    </button>
+   </div>
   </div>
  `).join("");
 }
 
 function mostrarFavoritos(){
- const cont=document.getElementById("favoritos");
+ const cont=$("favoritos");
+ favoritos.forEach(guardarCancion);
 
  if(!favoritos.length){
   cont.innerHTML="<p>Todavía no guardaste canciones.</p>";
@@ -326,12 +438,43 @@ function mostrarFavoritos(){
  cont.innerHTML=favoritos.map(c=>`
   <div class="resultado">
    <strong>${escapar(c.titulo)}</strong><br>
-   <small>${escapar(c.artista)} · ${escapar(c.fuente)}</small><br>
-   ${c.audio?`<button onclick="reproducirFavorito('${escapar(c.id)}')">▶ Escuchar</button>`:""}
-   ${c.enlace?`<button onclick="abrirFavorito('${escapar(c.id)}')">Abrir</button>`:""}
-   <button onclick="quitarFavorito('${escapar(c.id)}')">Quitar</button>
+   <small>${escapar(c.artista)} · ${escapar(c.fuente)}</small>
+   <div class="botones">
+    ${c.audio?`<button onclick="reproducirFavorito('${escapar(c.id)}')">▶ Escuchar</button>`:""}
+    ${c.enlace?`<button class="secundario" onclick="abrirCancion('${escapar(c.id)}')">Abrir</button>`:""}
+    <button class="rojo" onclick="quitarFavorito('${escapar(c.id)}')">Quitar</button>
+   </div>
   </div>
  `).join("");
+}
+
+function reproducirFavorito(id){
+ const c=favoritos.find(x=>x.id===id);
+ if(!c)return;
+ cola=favoritos.filter(x=>x.audio);
+ posicion=cola.findIndex(x=>x.id===id);
+ reproducir(c);
+}
+
+function reproducirFavoritos(){
+ cola=favoritos.filter(x=>x.audio);
+ if(!cola.length){
+  alert("No tienes favoritos reproducibles.");
+  return;
+ }
+ posicion=0;
+ reproducir(cola[0]);
+}
+
+function mezclarFavoritos(){
+ cola=favoritos.filter(x=>x.audio);
+ if(!cola.length){
+  alert("No tienes favoritos reproducibles.");
+  return;
+ }
+ cola.sort(()=>Math.random()-.5);
+ posicion=0;
+ reproducir(cola[0]);
 }
 
 async function buscarJamendo(q){
@@ -343,7 +486,6 @@ async function buscarJamendo(q){
   limit:"20",
   audioformat:"mp32"
  });
-
  const r=await fetch(u);
  if(!r.ok)throw Error("Jamendo");
  const d=await r.json();
@@ -353,8 +495,8 @@ async function buscarJamendo(q){
   titulo:x.name,
   artista:x.artist_name,
   fuente:"Jamendo",
-  audio:x.audio,
-  enlace:x.shareurl
+  audio:x.audio||"",
+  enlace:x.shareurl||""
  }));
 }
 
@@ -389,29 +531,20 @@ async function buscarItunes(q){
   artista:x.artistName,
   fuente:"iTunes",
   audio:x.previewUrl||"",
-  enlace:x.trackViewUrl
+  enlace:x.trackViewUrl||""
  }));
 }
 
 async function buscarSpotify(q){
  const access=await obtenerToken();
-
- if(!access){
-  throw Error("Spotify no está conectado. Pulsa Conectar Spotify.");
- }
+ if(!access)throw Error("No conectado");
 
  const r=await fetch(
   "https://api.spotify.com/v1/search?"+
-  new URLSearchParams({
-   q:q,
-   type:"track",
-   limit:"20"
-  }),
+  new URLSearchParams({q,type:"track",limit:"20"}),
   {headers:{Authorization:"Bearer "+access}}
  );
-
- if(!r.ok)throw Error("Spotify: "+r.status);
-
+ if(!r.ok)throw Error("Spotify "+r.status);
  const d=await r.json();
 
  return (d.tracks?.items||[]).map(x=>({
@@ -425,46 +558,39 @@ async function buscarSpotify(q){
 }
 
 async function buscarMusica(){
- const q=document.getElementById("busqueda").value.trim();
- const estado=document.getElementById("estado");
-
+ const q=$("busqueda").value.trim();
  if(!q){
   alert("Escribe una canción o artista.");
   return;
  }
 
- estado.textContent="Buscando en todas las plataformas...";
- document.getElementById("resultados").innerHTML="";
+ estado("Buscando música...");
+ $("resultados").innerHTML="";
 
+ const nombres=["Jamendo","Audius","iTunes","Spotify"];
  const tareas=[
   buscarJamendo(q),
   buscarAudius(q),
   buscarItunes(q),
   buscarSpotify(q)
  ];
-
- const nombres=["Jamendo","Audius","iTunes","Spotify"];
  const respuestas=await Promise.allSettled(tareas);
 
  let canciones=[];
  let errores=[];
 
  respuestas.forEach((r,i)=>{
-  if(r.status==="fulfilled"){
-   canciones=canciones.concat(r.value);
-  }else{
-   errores.push(nombres[i]);
-  }
+  if(r.status==="fulfilled")canciones=canciones.concat(r.value);
+  else errores.push(nombres[i]);
  });
 
  mostrarCanciones(canciones);
 
- estado.textContent=canciones.length+
-  " resultados encontrados. "+
-  (errores.length?"No respondieron: "+errores.join(", "):"Búsqueda terminada.");
+ estado(canciones.length+" resultados encontrados."+
+  (errores.length?" No respondieron: "+errores.join(", "):""));
 }
 
-document.getElementById("busqueda").addEventListener("keydown",e=>{
+$("busqueda").addEventListener("keydown",e=>{
  if(e.key==="Enter")buscarMusica();
 });
 
@@ -473,7 +599,8 @@ procesarAutorizacion();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+  navigator.serviceWorker.register("./service-worker.js")
+   .catch(()=>estado("No se pudo actualizar el modo aplicación."));
  });
 }
 </script>
