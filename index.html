@@ -10,37 +10,35 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080b0a;color:white;font-family:Arial,sans-serif;padding-bottom:120px}
-header{padding:25px 20px;background:#101914}
+body{margin:0;background:#080b0a;color:white;font-family:Arial,sans-serif;padding-bottom:150px}
+header{padding:22px;background:#101914}
 h1{color:#1ed760;font-size:30px;margin:0}
-h2{font-size:21px;margin:22px 0 12px}
+h2{font-size:20px;margin:20px 0 12px}
 p{color:#aaa}
 main{max-width:850px;margin:auto;padding:15px}
+.hero{background:linear-gradient(135deg,#174d2d,#102017);padding:20px;border-radius:15px}
 input,select{width:100%;padding:14px;margin:6px 0;border:1px solid #303b34;border-radius:10px;background:#202822;color:white;font-size:15px}
-button{border:0;border-radius:25px;padding:12px 17px;background:#1ed760;color:#061008;font-weight:bold;cursor:pointer;margin:4px}
-button.secondary{background:#26342c;color:white}
-button.active{background:#1ed760;color:#061008}
-.search-types{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0}
-.search-types button{background:#26342c;color:white}
-.search-types button.active{background:#1ed760;color:#061008}
-.tabs{display:flex;gap:5px;flex-wrap:wrap;margin:20px 0}
-.tabs button{background:#202822;color:white}
-.tabs button.active{background:#1ed760;color:black}
-.section{margin:20px 0}
+button{border:0;border-radius:25px;padding:12px 16px;background:#1ed760;color:#061008;font-weight:bold;margin:4px;cursor:pointer}
+.secondary{background:#26342c;color:white}
+.active{background:#1ed760!important;color:#061008!important}
+.sources,.tabs{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}
+.sources button,.tabs button{background:#26342c;color:white}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .card{background:#151c17;border-radius:12px;padding:10px;min-width:0}
 .card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;background:#26342c}
-.card b{display:block;margin:9px 0 4px}
-.card small{color:#aaa;display:block}
-.card button{padding:9px 12px}
-.actions{display:flex;flex-wrap:wrap;margin-top:7px}
+.card b{display:block;margin:9px 0}
+.card small{display:block;color:#aaa}
+.actions{display:flex;flex-wrap:wrap;margin-top:8px}
+.actions button{padding:9px 12px}
 #status{color:#1ed760;min-height:24px}
+.empty{color:#aaa;padding:20px;text-align:center}
 #player{position:fixed;bottom:0;left:0;right:0;background:#17231b;border-top:1px solid #35483a;padding:12px 15px calc(12px + env(safe-area-inset-bottom));z-index:10}
 .player-inner{max-width:850px;margin:auto}
-#playing{display:block;margin-bottom:7px}
+#playing{display:block;margin-bottom:8px}
 audio{width:100%;height:38px}
-.hero{background:linear-gradient(135deg,#174d2d,#102017);padding:20px;border-radius:15px;margin-bottom:20px}
-.empty{color:#aaa;padding:20px;text-align:center}
+iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:10px}
+details{margin:12px 0}
+summary{color:#1ed760;cursor:pointer}
 @media(min-width:600px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
@@ -48,62 +46,83 @@ audio{width:100%;height:38px}
 <body>
 <header>
 <h1>♫ Mi Música</h1>
-<p>Tu música, tu mundo. 💚</p>
+<p>Tu música, tu mundo 💚</p>
 </header>
 
 <main>
+
 <div class="hero">
 <h2>¡Bienvenido a Mi Música!</h2>
-<p>Encuentra canciones, artistas y álbumes de todo el mundo.</p>
+<p>Encuentra canciones de diferentes catálogos musicales.</p>
 </div>
 
-<section class="section">
+<section>
 <h2>🔎 Buscar música</h2>
 
-<div class="search-types">
-<button id="tipo-cancion" class="active" onclick="elegirTipo('cancion')">🎵 Canciones</button>
-<button id="tipo-artista" onclick="elegirTipo('artista')">🎤 Artistas</button>
-<button id="tipo-album" onclick="elegirTipo('album')">💿 Álbumes</button>
+<div class="sources">
+<button class="active" data-source="jamendo" onclick="elegirFuente('jamendo',this)">Jamendo</button>
+<button data-source="youtube" onclick="elegirFuente('youtube',this)">YouTube</button>
+<button data-source="audius" onclick="elegirFuente('audius',this)">Audius</button>
+<button data-source="itunes" onclick="elegirFuente('itunes',this)">iTunes</button>
+<button data-source="spotify" onclick="elegirFuente('spotify',this)">Spotify</button>
 </div>
 
-<input id="search" placeholder="Escribe el nombre de una canción">
+<select id="tipo">
+<option value="cancion">🎵 Canciones</option>
+<option value="artista">🎤 Artistas</option>
+<option value="album">💿 Álbumes</option>
+</select>
+
+<input id="search" placeholder="Escribe una canción o artista">
 
 <button onclick="buscar()">Buscar 🔎</button>
 
 <details>
-<summary style="color:#1ed760;margin-top:12px">Configuración de conexión</summary>
-<input id="client" placeholder="Client ID de Jamendo">
-<button onclick="guardarID()">Guardar conexión</button>
+<summary>⚙️ Configuración de conexiones</summary>
+
+<label>Jamendo Client ID</label>
+<input id="jamendo" placeholder="Client ID de Jamendo">
+
+<label>YouTube API Key</label>
+<input id="youtubeKey" placeholder="Clave API de Google">
+
+<label>Audius API Key (si tienes una)</label>
+<input id="audiusKey" placeholder="Clave API de Audius">
+
+<label>Spotify Access Token</label>
+<input id="spotifyToken" placeholder="Token de acceso de Spotify">
+
+<button onclick="guardarConfiguracion()">Guardar conexiones</button>
 </details>
 </section>
 
-<section class="section">
+<section>
 <h2>🌎 Música por países</h2>
-<select id="pais-musica">
+<select id="pais">
 <option value="">Elegir país</option>
-<option value="Paraguay">🇵🇾 Paraguay</option>
-<option value="Argentina">🇦🇷 Argentina</option>
-<option value="Brasil">🇧🇷 Brasil</option>
-<option value="Mexico">🇲🇽 México</option>
-<option value="Colombia">🇨🇴 Colombia</option>
-<option value="Chile">🇨🇱 Chile</option>
-<option value="Uruguay">🇺🇾 Uruguay</option>
-<option value="Peru">🇵🇪 Perú</option>
-<option value="Bolivia">🇧🇴 Bolivia</option>
-<option value="Venezuela">🇻🇪 Venezuela</option>
-<option value="Ecuador">🇪🇨 Ecuador</option>
-<option value="España">🇪🇸 España</option>
-<option value="Estados Unidos">🇺🇸 Estados Unidos</option>
-<option value="Francia">🇫🇷 Francia</option>
-<option value="Italia">🇮🇹 Italia</option>
-<option value="Portugal">🇵🇹 Portugal</option>
-<option value="Alemania">🇩🇪 Alemania</option>
-<option value="Reino Unido">🇬🇧 Reino Unido</option>
-<option value="Japon">🇯🇵 Japón</option>
-<option value="Corea">🇰🇷 Corea</option>
-<option value="India">🇮🇳 India</option>
-<option value="Canada">🇨🇦 Canadá</option>
-<option value="Australia">🇦🇺 Australia</option>
+<option>Paraguay</option>
+<option>Argentina</option>
+<option>Brasil</option>
+<option>Mexico</option>
+<option>Colombia</option>
+<option>Chile</option>
+<option>Uruguay</option>
+<option>Peru</option>
+<option>Bolivia</option>
+<option>Venezuela</option>
+<option>Ecuador</option>
+<option>España</option>
+<option>Estados Unidos</option>
+<option>Francia</option>
+<option>Italia</option>
+<option>Portugal</option>
+<option>Alemania</option>
+<option>Reino Unido</option>
+<option>Japon</option>
+<option>Corea</option>
+<option>India</option>
+<option>Canada</option>
+<option>Australia</option>
 </select>
 <button onclick="buscarPais()">Buscar país 🌎</button>
 </section>
@@ -114,31 +133,30 @@ audio{width:100%;height:38px}
 <button onclick="cambiarTab('lista',this)">♫ Mi lista</button>
 </div>
 
-<p id="status">Conectando con Jamendo...</p>
+<p id="status">Listo para buscar música 💚</p>
 
-<section class="section">
 <div id="songs" class="grid">
-<div class="empty">Tus canciones aparecerán aquí.</div>
+<div class="empty">Busca tus canciones favoritas.</div>
 </div>
-</section>
+
 </main>
 
 <div id="player">
 <div class="player-inner">
 <b id="playing">🎵 Selecciona una canción</b>
 <audio id="audio" controls></audio>
+<div id="videoPlayer"></div>
 </div>
 </div>
 
 <script>
-const CLIENT_DEFAULT="93852133";
 const API="https://api.jamendo.com/v3.0";
 
+let fuente="jamendo";
+let tab="inicio";
 let tracks=[];
 let favorites=leer("miMusicaFavoritos");
 let playlist=leer("miMusicaLista");
-let tab="inicio";
-let tipo="cancion";
 
 const $=id=>document.getElementById(id);
 
@@ -147,259 +165,297 @@ function leer(key){
  catch(e){return []}
 }
 
-$("client").value=localStorage.getItem("jamendoID")||CLIENT_DEFAULT;
+$("jamendo").value=localStorage.getItem("jamendoID")||"93852133";
+$("youtubeKey").value=localStorage.getItem("youtubeKey")||"";
+$("audiusKey").value=localStorage.getItem("audiusKey")||"";
+$("spotifyToken").value=localStorage.getItem("spotifyToken")||"";
 
-function elegirTipo(nuevo){
- tipo=nuevo;
-
- document.querySelectorAll(".search-types button")
- .forEach(b=>b.classList.remove("active"));
-
- $("tipo-"+nuevo).classList.add("active");
-
- const textos={
-  cancion:"Escribe el nombre de una canción",
-  artista:"Escribe el nombre del artista o grupo",
-  album:"Escribe el nombre del álbum"
- };
-
- $("search").placeholder=textos[nuevo];
- $("search").value="";
-}
-
-function guardarID(){
- const id=$("client").value.trim();
-
- if(!id){
-  alert("Escribe tu Client ID");
-  return;
- }
-
- localStorage.setItem("jamendoID",id);
- $("status").textContent="Conexión guardada 💚";
- cargar();
-}
-
-function parametros(extra={}){
- return new URLSearchParams({
-  client_id:$("client").value.trim()||CLIENT_DEFAULT,
-  format:"json",
-  limit:"50",
-  audioformat:"mp32",
-  ...extra
+function guardarConfiguracion(){
+ ["jamendo","youtubeKey","audiusKey","spotifyToken"].forEach(id=>{
+  const keys={
+   jamendo:"jamendoID",
+   youtubeKey:"youtubeKey",
+   audiusKey:"audiusKey",
+   spotifyToken:"spotifyToken"
+  };
+  localStorage.setItem(keys[id],$(id).value.trim());
  });
+ $("status").textContent="Conexiones guardadas 💚";
 }
 
-async function consultar(endpoint,extra={}){
- const url=API+"/"+endpoint+"/?"+parametros(extra);
- const respuesta=await fetch(url);
-
- if(!respuesta.ok){
-  throw Error("Error de conexión: "+respuesta.status);
- }
-
- const json=await respuesta.json();
-
- if(json.headers && json.headers.status==="failed"){
-  throw Error(json.headers.error_message||"Error de Jamendo");
- }
-
- return json.results||[];
-}
-
-async function cargar(){
- $("status").textContent="Cargando música...";
-
- try{
-  tracks=await consultar("tracks",{
-   order:"popularity_total",
-   type:"single albumtrack"
-  });
-
-  tab="inicio";
-  actualizarTabs();
-  mostrar();
-
-  $("status").textContent=tracks.length+" canciones encontradas 💚";
- }catch(e){
-  $("status").textContent="No se pudo cargar. Revisa Internet o tu conexión.";
- }
-}
-
-async function buscar(){
- const q=$("search").value.trim();
-
- if(!q){
-  $("status").textContent="Escribe un nombre para buscar.";
-  return;
- }
-
- $("status").textContent="Buscando "+tipo+": "+q+"...";
-
- try{
-  let resultados=[];
-
-  if(tipo==="cancion"){
-   resultados=await consultar("tracks",{
-    namesearch:q,
-    order:"relevance",
-    type:"single albumtrack"
-   });
-  }
-
-  if(tipo==="artista"){
-   const artistas=await consultar("artists/tracks",{
-    namesearch:q,
-    order:"name",
-    track_type:"single albumtrack"
-   });
-
-   artistas.forEach(artista=>{
-    if(Array.isArray(artista.tracks)){
-     artista.tracks.forEach(cancion=>{
-      resultados.push({
-       ...cancion,
-       artist_name:artista.name,
-       artist_image:artista.image
-      });
-     });
-    }
-   });
-  }
-
-  if(tipo==="album"){
-   const albumes=await consultar("albums/tracks",{
-    namesearch:q,
-    order:"name",
-    type:"album single"
-   });
-
-   albumes.forEach(album=>{
-    if(Array.isArray(album.tracks)){
-     album.tracks.forEach(cancion=>{
-      resultados.push({
-       ...cancion,
-       album_name:album.name,
-       album_image:album.image,
-       artist_name:album.artist_name||cancion.artist_name
-      });
-     });
-    }
-   });
-  }
-
-  const unicas=new Map();
-
-  resultados.forEach(t=>{
-   if(t.audio){
-    unicas.set(String(t.id),t);
-   }
-  });
-
-  tracks=Array.from(unicas.values());
-  tab="inicio";
-  actualizarTabs();
-  mostrar();
-
-  $("status").textContent=tracks.length
-   ?tracks.length+" resultados encontrados para "+q+" 💚"
-   :"No encontramos resultados en el catálogo de Jamendo.";
-
- }catch(e){
-  console.error(e);
-  $("status").textContent="Error al buscar. Revisa tu conexión e intenta otra vez.";
- }
-}
-
-const etiquetas={
- Paraguay:["polka","paraguayan","folk","guarani"],
- Argentina:["rock","folk","cumbia","tango"],
- Brasil:["samba","bossa nova","brazil"],
- Mexico:["ranchera","mariachi","mexico"],
- Colombia:["cumbia","vallenato","colombia"],
- Chile:["folk","rock","chile"],
- Uruguay:["candombe","folk","uruguay"],
- Peru:["andean","folk","peru"],
- Bolivia:["andean","folk","bolivia"],
- Venezuela:["llanera","folk","venezuela"],
- Ecuador:["andean","folk","ecuador"],
- España:["flamenco","spanish","pop"],
- "Estados Unidos":["country","rock","blues"],
- Francia:["chanson","french","pop"],
- Italia:["italian","pop","rock"],
- Portugal:["fado","portuguese","folk"],
- Alemania:["electronic","rock","german"],
- "Reino Unido":["british","rock","pop"],
- Japon:["japanese","japan","pop"],
- Corea:["korean","korea","pop"],
- India:["indian","india","folk"],
- Canada:["canadian","folk","rock"],
- Australia:["australian","rock","pop"]
-};
-
-async function buscarPais(){
- const pais=$("pais-musica").value;
-
- if(!pais){
-  $("status").textContent="Elige un país primero.";
-  return;
- }
-
- $("status").textContent="Buscando música de "+pais+"...";
-
- try{
-  const estilos=etiquetas[pais]||[pais];
-
-  const respuestas=await Promise.allSettled(
-   estilos.map(tag=>consultar("tracks",{
-    fuzzytags:tag,
-    order:"popularity_total",
-    type:"single albumtrack"
-   }))
-  );
-
-  const unicas=new Map();
-
-  respuestas.forEach(r=>{
-   if(r.status==="fulfilled"){
-    r.value.forEach(t=>{
-     if(t.audio)unicas.set(String(t.id),t);
-    });
-   }
-  });
-
-  tracks=Array.from(unicas.values());
-  tab="inicio";
-  actualizarTabs();
-  mostrar();
-
-  $("status").textContent=tracks.length+
-   " canciones relacionadas con "+pais+".";
-
- }catch(e){
-  $("status").textContent="No se pudo buscar en Jamendo.";
- }
-}
-
-function actualizarTabs(){
- document.querySelectorAll(".tabs button")
- .forEach(b=>b.classList.remove("active"));
-
- const botones=document.querySelectorAll(".tabs button");
-
- if(tab==="inicio")botones[0].classList.add("active");
- if(tab==="favoritos")botones[1].classList.add("active");
- if(tab==="lista")botones[2].classList.add("active");
+function elegirFuente(nombre,boton){
+ fuente=nombre;
+ document.querySelectorAll(".sources button").forEach(b=>b.classList.remove("active"));
+ boton.classList.add("active");
+ $("status").textContent="Fuente seleccionada: "+nombre;
+ $("songs").innerHTML='<div class="empty">Escribe qué música quieres encontrar.</div>';
 }
 
 function cambiarTab(nombre,boton){
  tab=nombre;
-
- document.querySelectorAll(".tabs button")
- .forEach(b=>b.classList.remove("active"));
-
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
  boton.classList.add("active");
  mostrar();
+}
+
+async function pedir(url,headers={}){
+ const r=await fetch(url,{headers});
+ if(!r.ok)throw Error("Error "+r.status);
+ return r.json();
+}
+
+async function buscar(){
+ const q=$("search").value.trim();
+ if(!q){$("status").textContent="Escribe una canción o artista.";return;}
+
+ $("status").textContent="Buscando en "+fuente+"...";
+
+ try{
+  if(fuente==="jamendo")await buscarJamendo(q);
+  if(fuente==="audius")await buscarAudius(q);
+  if(fuente==="itunes")await buscarItunes(q);
+  if(fuente==="youtube")await buscarYoutube(q);
+  if(fuente==="spotify")await buscarSpotify(q);
+
+  tab="inicio";
+  actualizarTabs();
+  mostrar();
+
+  if(!tracks.length){
+   $("status").textContent="No se encontraron resultados. Prueba otra búsqueda.";
+  }else{
+   $("status").textContent=tracks.length+" resultados encontrados en "+fuente+" 💚";
+  }
+ }catch(e){
+  console.error(e);
+  $("status").textContent="No se pudo buscar. Revisa la conexión o las claves API.";
+ }
+}
+
+async function buscarJamendo(q){
+ const tipo=$("tipo").value;
+ const endpoint=tipo==="artista"?"artists":tipo==="album"?"albums":"tracks";
+ const params=new URLSearchParams({
+  client_id:$("jamendo").value.trim(),
+  format:"json",
+  limit:"50",
+  namesearch:q
+ });
+
+ if(endpoint==="tracks"){
+  params.set("audioformat","mp32");
+  params.set("type","single albumtrack");
+ }
+
+ const data=await pedir(API+"/"+endpoint+"/?"+params);
+ tracks=(data.results||[]).map(x=>({
+  id:"jamendo-"+x.id,
+  name:x.name,
+  artist_name:x.artist_name||x.name,
+  image:x.album_image||x.image||"",
+  audio:x.audio||"",
+  url:x.shareurl||"",
+  source:"jamendo",
+  playable:!!x.audio
+ }));
+}
+
+async function buscarAudius(q){
+ const headers={};
+ const key=$("audiusKey").value.trim();
+ if(key)headers["x-api-key"]=key;
+
+ const params=new URLSearchParams({query:q,limit:"30"});
+ const data=await pedir("https://api.audius.co/v1/tracks/search?"+params,headers);
+
+ tracks=(data.data||[]).map(x=>({
+  id:"audius-"+x.id,
+  originalId:x.id,
+  name:x.title,
+  artist_name:x.user?.name||"Audius",
+  image:x.artwork?.["480x480"]||"",
+  audio:"https://api.audius.co/v1/tracks/"+encodeURIComponent(x.id)+"/stream",
+  url:x.permalink||"",
+  source:"audius",
+  playable:true
+ }));
+}
+
+async function buscarItunes(q){
+ const tipo=$("tipo").value;
+ const entity=tipo==="artista"?"musicArtist":tipo==="album"?"album":"song";
+ const params=new URLSearchParams({
+  term:q,
+  media:"music",
+  entity:entity,
+  limit:"50"
+ });
+
+ const data=await pedir("https://itunes.apple.com/search?"+params);
+
+ tracks=(data.results||[]).map(x=>({
+  id:"itunes-"+x.trackId,
+  name:x.trackName||x.collectionName||x.artistName,
+  artist_name:x.artistName||"",
+  image:x.artworkUrl100||"",
+  audio:"",
+  url:x.trackViewUrl||x.collectionViewUrl||"",
+  source:"itunes",
+  playable:false
+ }));
+}
+
+async function buscarYoutube(q){
+ const key=$("youtubeKey").value.trim();
+ if(!key)throw Error("Falta la clave API de YouTube");
+
+ const tipo=$("tipo").value;
+ const params=new URLSearchParams({
+  part:"snippet",
+  q:q,
+  type:"video",
+  maxResults:"25",
+  key:key
+ });
+
+ if(tipo==="artista")params.set("q",q+" música oficial");
+ if(tipo==="album")params.set("q",q+" álbum completo");
+
+ const data=await pedir("https://www.googleapis.com/youtube/v3/search?"+params);
+
+ tracks=(data.items||[]).map(x=>{
+  const id=x.id.videoId;
+  return {
+   id:"youtube-"+id,
+   originalId:id,
+   name:x.snippet.title,
+   artist_name:x.snippet.channelTitle,
+   image:x.snippet.thumbnails?.high?.url||"",
+   audio:"",
+   url:"https://www.youtube.com/watch?v="+id,
+   source:"youtube",
+   playable:true
+  };
+ });
+}
+
+async function buscarSpotify(q){
+ const token=$("spotifyToken").value.trim();
+ if(!token)throw Error("Falta el token de Spotify");
+
+ const tipo=$("tipo").value;
+ const type=tipo==="artista"?"artist":tipo==="album"?"album":"track";
+
+ const params=new URLSearchParams({
+  q:q,
+  type:type,
+  limit:"30",
+  market:"PY"
+ });
+
+ const data=await pedir("https://api.spotify.com/v1/search?"+params,{
+  Authorization:"Bearer "+token
+ });
+
+ const items=data[type+"s"]?.items||[];
+
+ tracks=items.map(x=>{
+  const artist=x.artists?.map(a=>a.name).join(", ")||x.name;
+  const image=x.album?.images?.[0]?.url||x.images?.[0]?.url||"";
+
+  return {
+   id:"spotify-"+x.id,
+   originalId:x.id,
+   name:x.name,
+   artist_name:artist,
+   image:image,
+   audio:"",
+   url:x.external_urls?.spotify||"",
+   source:"spotify",
+   playable:false
+  };
+ });
+}
+
+const etiquetas={
+ Paraguay:["Paraguay","polka paraguaya","guarania"],
+ Argentina:["Argentina","rock argentino","tango"],
+ Brasil:["Brasil","samba","bossa nova"],
+ Mexico:["Mexico","ranchera","mariachi"],
+ Colombia:["Colombia","vallenato","cumbia"],
+ Chile:["Chile","musica chilena"],
+ Uruguay:["Uruguay","candombe"],
+ Peru:["Peru","musica andina"],
+ Bolivia:["Bolivia","musica andina"],
+ Venezuela:["Venezuela","musica llanera"],
+ Ecuador:["Ecuador","musica andina"],
+ España:["España","flamenco"],
+ "Estados Unidos":["USA","country music"],
+ Francia:["France","chanson française"],
+ Italia:["Italia","musica italiana"],
+ Portugal:["Portugal","fado"],
+ Alemania:["Germany","German music"],
+ "Reino Unido":["UK","British music"],
+ Japon:["Japan","Japanese music"],
+ Corea:["Korea","Korean music"],
+ India:["India","Indian music"],
+ Canada:["Canada","Canadian music"],
+ Australia:["Australia","Australian music"]
+};
+
+async function buscarPais(){
+ const pais=$("pais").value;
+ if(!pais){$("status").textContent="Elige un país.";return;}
+
+ $("search").value=pais;
+ $("tipo").value="cancion";
+
+ if(fuente==="jamendo"){
+  const tags=etiquetas[pais]||[pais];
+  $("status").textContent="Buscando música de "+pais+"...";
+  const resultados=await Promise.allSettled(tags.map(async tag=>{
+   const params=new URLSearchParams({
+    client_id:$("jamendo").value.trim(),
+    format:"json",
+    limit:"30",
+    audioformat:"mp32",
+    fuzzytags:tag
+   });
+   const data=await pedir(API+"/tracks/?"+params);
+   return data.results||[];
+  }));
+
+  const unicas=new Map();
+  resultados.forEach(r=>{
+   if(r.status==="fulfilled")r.value.forEach(t=>{
+    if(t.audio)unicas.set(String(t.id),t);
+   });
+  });
+
+  tracks=Array.from(unicas.values()).map(x=>({
+   id:"jamendo-"+x.id,
+   name:x.name,
+   artist_name:x.artist_name,
+   image:x.album_image||"",
+   audio:x.audio,
+   url:x.shareurl||"",
+   source:"jamendo",
+   playable:true
+  }));
+
+  tab="inicio";
+  actualizarTabs();
+  mostrar();
+  $("status").textContent=tracks.length+" canciones encontradas para "+pais;
+ }else{
+  await buscar();
+ }
+}
+
+function actualizarTabs(){
+ const botones=document.querySelectorAll(".tabs button");
+ botones.forEach(b=>b.classList.remove("active"));
+ botones[tab==="inicio"?0:tab==="favoritos"?1:2].classList.add("active");
 }
 
 function mostrar(){
@@ -407,7 +463,6 @@ function mostrar(){
  box.innerHTML="";
 
  let items=tracks;
-
  if(tab==="favoritos")items=favorites;
  if(tab==="lista")items=playlist;
 
@@ -417,12 +472,11 @@ function mostrar(){
  }
 
  items.forEach(t=>{
-  const id=String(t.id);
   const card=document.createElement("div");
   card.className="card";
 
   const img=document.createElement("img");
-  img.src=t.album_image||t.image||"";
+  img.src=t.image||"";
   img.alt="Portada";
   img.onerror=()=>img.style.visibility="hidden";
 
@@ -432,69 +486,75 @@ function mostrar(){
   const artist=document.createElement("small");
   artist.textContent=t.artist_name||"Artista";
 
-  const album=document.createElement("small");
-  album.textContent=t.album_name||"";
+  const label=document.createElement("small");
+  label.textContent="Fuente: "+t.source;
 
   const actions=document.createElement("div");
   actions.className="actions";
 
   const play=document.createElement("button");
-  play.textContent="▶";
+  play.textContent=t.source==="itunes"||t.source==="spotify"?"Abrir":"▶";
   play.onclick=()=>reproducir(t);
 
   const fav=document.createElement("button");
   fav.className="secondary";
-  fav.textContent=favorites.some(x=>String(x.id)===id)?"♥":"♡";
+  fav.textContent=favorites.some(x=>x.id===t.id)?"♥":"♡";
   fav.onclick=()=>alternar(favorites,t,"miMusicaFavoritos");
 
   const add=document.createElement("button");
   add.className="secondary";
-  add.textContent=playlist.some(x=>String(x.id)===id)?"✓":"+";
+  add.textContent=playlist.some(x=>x.id===t.id)?"✓":"+";
   add.onclick=()=>alternar(playlist,t,"miMusicaLista");
 
   actions.append(play,fav,add);
-  card.append(img,title,artist,album,actions);
+  card.append(img,title,artist,label,actions);
   box.append(card);
  });
 }
 
-function alternar(array,cancion,key){
- const id=String(cancion.id);
- const index=array.findIndex(x=>String(x.id)===id);
-
+function alternar(array,t,key){
+ const index=array.findIndex(x=>x.id===t.id);
  if(index>=0)array.splice(index,1);
- else array.push(cancion);
+ else array.push(t);
 
  localStorage.setItem(key,JSON.stringify(array));
  mostrar();
 }
 
 function reproducir(t){
- if(!t.audio){
-  alert("Audio no disponible");
+ $("playing").textContent=t.name+" — "+t.artist_name;
+ $("videoPlayer").innerHTML="";
+ $("audio").pause();
+ $("audio").removeAttribute("src");
+
+ if(t.source==="jamendo"||t.source==="audius"){
+  if(!t.audio){$("status").textContent="Audio no disponible.";return;}
+  $("audio").src=t.audio;
+  $("audio").play().catch(()=>{$("status").textContent="Pulsa reproducir en el reproductor.";});
   return;
  }
 
- $("playing").textContent=t.name+" — "+(t.artist_name||"Artista");
- $("audio").src=t.audio;
+ if(t.source==="youtube"){
+  $("videoPlayer").innerHTML=
+   '<iframe src="https://www.youtube-nocookie.com/embed/'+
+   encodeURIComponent(t.originalId)+
+   '?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+  return;
+ }
 
- $("audio").play().catch(()=>{
-  $("status").textContent="Pulsa reproducir en el reproductor.";
- });
+ if(t.url)window.open(t.url,"_blank");
+ else $("status").textContent="Enlace no disponible.";
 }
 
 $("search").addEventListener("keydown",e=>{
  if(e.key==="Enter")buscar();
 });
 
-if("serviceWorker" in navigator){
- window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("./service-worker.js")
-   .catch(e=>console.log("Service worker:",e));
- });
-}
+cargarMensaje();
 
-cargar();
+function cargarMensaje(){
+ $("status").textContent="Mi Música está lista 💚";
+}
 </script>
 </body>
 </html>
